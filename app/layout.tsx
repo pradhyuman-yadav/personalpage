@@ -1,6 +1,21 @@
-import Image from "next/image";
+import type { Metadata } from "next";
 import Link from "next/link";
-import "../styles/globals.css";
+import { Inconsolata } from 'next/font/google';
+import "./globals.css";
+
+
+
+const inconsolata = Inconsolata({
+  subsets: ['latin'],
+  variable: '--font-inconsolata',
+});
+
+
+export const metadata: Metadata = {
+  title: "Pradhyuman",
+  description: "Pradhyuman's public space",
+};
+
 
 export default function RootLayout({
   children,
@@ -9,18 +24,10 @@ export default function RootLayout({
 }) {
   const header = (
     <header>
-      <div className="text-center bg-slate-800 p-8 my-6 rounded-md">
-        <Image
-          src="/logo.png"
-          width={40}
-          height={40}
-          className="mx-auto"
-          alt={"logo"}
-        />
+      <div className="text-right bg-slate-800 p-8 my-6 rounded-md">
         <Link href="/">
-          <h1 className="text-2xl text-white font-bold mt-4">Jack's Blog</h1>
+          <h1 className="text-9xl text-white font-bold mt-4">Pradhyuman</h1>
         </Link>
-        <p className="text-slate-300">🤟 Welcome to my tech blog. 💻</p>
       </div>
     </header>
   );
@@ -28,16 +35,16 @@ export default function RootLayout({
   const footer = (
     <footer>
       <div className="border-t border-slate-400 mt-12 py-6 text-center text-slate-400">
-        <h3>Designed by Pixegami</h3>
+        <h3>Designed by Pradhyuman and LLM</h3>
       </div>
     </footer>
   );
 
   return (
-    <html>
+    <html lang="en" className={inconsolata.variable}>
       <head />
       <body>
-        <div className="mx-auto  max-w-2xl px-6">
+        <div className="mx-auto  max-w-7xl px-6">
           {header}
           {children}
           {footer}
