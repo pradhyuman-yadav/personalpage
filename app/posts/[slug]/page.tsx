@@ -18,9 +18,10 @@ export const generateStaticParams = async () => {
   }));
 };
 
-const PostPage = (props: any) => {
-  const slug = props.params.slug;
+export default function PostPage({ params }: {params: { slug: string }}) {
+  const { slug } = params;
   const post = getPostContent(slug);
+
   return (
     <div>
       <div className="my-12 text-center">
@@ -33,6 +34,4 @@ const PostPage = (props: any) => {
       </article>
     </div>
   );
-};
-
-export default PostPage;
+}

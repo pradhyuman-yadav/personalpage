@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Inconsolata } from 'next/font/google';
 import "./globals.css";
+import NavMenu from "@/components/NavMenu"; // Adjust the path as necessary
+import { ThemeProvider } from "@/components/theme-provider"
+
 
 
 
@@ -28,6 +31,7 @@ export default function RootLayout({
         <Link href="/">
           <h1 className="text-9xl text-white font-bold mt-4">Pradhyuman</h1>
         </Link>
+        <NavMenu/>
       </div>
     </header>
   );
@@ -44,11 +48,18 @@ export default function RootLayout({
     <html lang="en" className={inconsolata.variable}>
       <head />
       <body>
-        <div className="mx-auto  max-w-7xl px-6">
-          {header}
-          {children}
-          {footer}
-        </div>
+      <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+          <div className="mx-auto  max-w-7xl px-6">
+            {header}
+            {children}
+            {footer}
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );
