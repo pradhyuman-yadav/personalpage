@@ -4,8 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "nextjs-app"
         CONTAINER_NAME = "nextjs-container"
-        HOST_PORT = "3000"
-        CONTAINER_PORT = "3000"
+        APP_PORT = "3000"
     }
 
     stages {
@@ -28,7 +27,7 @@ pipeline {
                 sh '''
                 docker stop $CONTAINER_NAME || true
                 docker rm $CONTAINER_NAME || true
-                docker run -d --name $CONTAINER_NAME -p 3000:3000 $IMAGE_NAME
+                docker run -d --name $CONTAINER_NAME -p $APP_PORT:$APP_PORT $IMAGE_NAME
                 '''
             }
         }
