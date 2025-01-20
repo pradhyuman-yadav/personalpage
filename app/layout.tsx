@@ -27,11 +27,13 @@ export default function RootLayout({
 }) {
   const header = (
     <header>
-      <div className="text-right bg-slate-800 p-8 my-6 rounded-md">
+      <div className="text-right p-8 my-6 rounded-md">
         <Link href="/">
-          <h1 className="text-9xl text-white font-bold mt-4">Pradhyuman</h1>
+          <h1 className="text-9xl font-bold mt-4">Pradhyuman</h1>
         </Link>
-        <NavMenu/>
+        <div className="justify-items-end py-5">
+          <NavMenu/>
+        </div>
       </div>
     </header>
   );
