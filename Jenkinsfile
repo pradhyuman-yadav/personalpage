@@ -17,7 +17,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t $IMAGE_NAME .
+                docker -H tcp://jenkins-docker:2376 build -t $IMAGE_NAME .
                 '''
             }
         }
@@ -25,9 +25,9 @@ pipeline {
         stage('Deploy Docker Container') {
             steps {
                 sh '''
-                docker stop $CONTAINER_NAME || true
-                docker rm $CONTAINER_NAME || true
-                docker run -d --name $CONTAINER_NAME -p $APP_PORT:$APP_PORT $IMAGE_NAME
+                docker -H tcp://jenkins-docker:2376 stop $CONTAINER_NAME || true
+                docker -H tcp://jenkins-docker:2376 rm $CONTAINER_NAME || true
+                docker -H tcp://jenkins-docker:2376 run -d --name $CONTAINER_NAME -p $APP_PORT:$APP_PORT $IMAGE_NAME
                 '''
             }
         }
