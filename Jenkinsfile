@@ -4,6 +4,8 @@ pipeline {
     environment {
         IMAGE_NAME = "nextjs-app"
         CONTAINER_NAME = "nextjs-container"
+        HOST_PORT = "3000"
+        CONTAINER_PORT = "3000"
     }
 
     stages {
