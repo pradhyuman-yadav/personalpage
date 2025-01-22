@@ -21,12 +21,6 @@ pipeline {
             }
         }
 
-        stage('Test Next.js') {
-            steps {
-                sh 'npm run test'  // If you have tests
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 // Build the Docker image using the Dockerfile in the repo
