@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'node:18' // Base Docker image with Node.js pre-installed
+            image 'node:18'
             args '--privileged --network jenkins --env DOCKER_HOST=tcp://docker:2376 --env DOCKER_CERT_PATH=/certs/client --env DOCKER_TLS_VERIFY=1'
         }
     }
