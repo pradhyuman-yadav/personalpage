@@ -35,7 +35,7 @@ pipeline {
                     sh 'docker rm -f nextjs_container || true'
 
                     // Run the newly built image in the background
-                    sh 'docker run -d --name nextjs_container -p 3000:3000 my-nextjs-app:latest'
+                    sh 'docker run -v /proc:/host_proc -e HOST_PROC=/host_proc -d --name nextjs_container -p 3000:3000 my-nextjs-app:latest'
                 }
             }
         }
