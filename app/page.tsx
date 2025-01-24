@@ -1,8 +1,5 @@
 import getPostMetadata from "@/components/getPostMetadata";
 import PostPreview from "@/components/PostPreview";
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { DesktopIcon } from "@radix-ui/react-icons"
 import {
   HoverCard,

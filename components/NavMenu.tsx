@@ -14,7 +14,6 @@ import {
 
 import { MoonIcon, SunIcon } from "@radix-ui/react-icons"
 import { useTheme } from "next-themes"
-import { Separator } from "@/components/ui/separator"
 import { Toggle } from "@/components/ui/toggle"
 
 
