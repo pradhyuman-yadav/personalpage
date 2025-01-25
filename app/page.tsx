@@ -3,7 +3,12 @@ import PostPreview from "@/components/PostPreview";
 
 function Home() {
   const postMetadata = getPostMetadata();
-  const postPreviews = postMetadata.map((post) => (
+
+  const sortedPostMetadata = postMetadata.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  const postPreviews = sortedPostMetadata.map((post) => (
     <PostPreview key={post.slug} {...post} />
   ));
 
