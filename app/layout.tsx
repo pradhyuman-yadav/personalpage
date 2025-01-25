@@ -42,7 +42,7 @@ const header = (
   <header>
     <div className="text-right p-8 my-6 rounded-md">
       <Link href="/">
-        <h1 className="text-9xl font-bold mt-4">Pradhyuman</h1>
+        <h1 className="scroll-m-20 sm:text-4xl md:text-6xl lg:text-9xl font-bold mt-4">Pradhyuman</h1>
       </Link>
       <div className="justify-items-end py-5">
         <NavMenu />
