@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inconsolata } from "next/font/google";
-import "./globals.css";
+import "@/app/globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DesktopIcon } from "@radix-ui/react-icons";
 import {
@@ -42,7 +42,9 @@ const header = (
   <header>
     <div className="text-right p-8 my-6 rounded-md">
       <Link href="/">
-        <h1 className="scroll-m-20 sm:text-4xl md:text-6xl lg:text-9xl font-bold mt-4">Pradhyuman</h1>
+        <h1 className="scroll-m-20 sm:text-4xl md:text-6xl lg:text-9xl font-bold mt-4">
+          Pradhyuman
+        </h1>
       </Link>
       <div className="justify-items-end py-5">
         <NavMenu />
@@ -65,25 +67,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <html lang="en" className={inconsolata.variable}>
-        <head />
-        <body>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <div className="border top-2 right-2 absolute">{info}</div>
-            <div className="mx-auto  max-w-7xl px-6">
-              {header}
-              {children}
-              {footer}
-            </div>
-          </ThemeProvider>
-        </body>
-      </html>
-    </>
+    <html lang="en" className={inconsolata.variable}>
+      <head />
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="border top-2 right-2 absolute">{info}</div>
+          <div className="mx-auto  max-w-7xl px-6">
+            {header}
+            <main>{children}</main>
+            {footer}
+          </div>
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }
