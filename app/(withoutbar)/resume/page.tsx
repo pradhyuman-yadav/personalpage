@@ -1,10 +1,7 @@
 'use client'
 
 import React from "react";
-import {PDFEmbed} from "@/components/resume";
-import { Suspense } from 'react';
 import dynamic from "next/dynamic";
-// import PDFViewer from "@/components/resumeView";
 
 const PDFViewer = dynamic(
     () => import('@/components/resumeView'),
@@ -16,7 +13,6 @@ const PDFViewer = dynamic(
 
 const FullScreenImagePage = () => {
     return (
-        // <PDFEmbed />
         <PDFViewer />
     );
 };

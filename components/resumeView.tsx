@@ -10,8 +10,8 @@ import { DownloadIcon } from "@radix-ui/react-icons";
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 export default function PDFViewer() {
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [, setNumPages] = useState<number | null>(null);
+  const [pageNumber] = useState<number>(1);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -49,26 +49,6 @@ export default function PDFViewer() {
           </Document>
         </div>
       </div>
-
-      {/* <div className="mt-4 flex gap-4">
-        <button 
-          onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
-          disabled={pageNumber <= 1}
-          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <span className="self-center">
-          Page {pageNumber} of {numPages ?? '...'}
-        </span>
-        <button 
-          onClick={() => setPageNumber(Math.min(numPages || 1, pageNumber + 1))}
-          disabled={pageNumber >= (numPages || 1)}
-          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div> */}
     </div>
   );
 }
