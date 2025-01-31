@@ -43,7 +43,7 @@ const CpuLoadChart: React.FC = () => {
 
   return (
     <div >
-      <p className="text-base mb-4">Real-Time CPU Load and Temp</p>
+      <p className="text-base mb-4">Real-Time Server CPU Load and Temp</p>
       <LineChart
         width={300}
         height={150}
@@ -56,7 +56,7 @@ const CpuLoadChart: React.FC = () => {
         <Line type="monotone" dataKey="load" stroke="#8884d8" dot={false} />
         <Line type="monotone" dataKey="cpuTemperature" stroke="#FF5733" dot={false} />
       </LineChart>
-      <p className="text-base mb-4">Real-Time Mem and disk Load</p>
+      <p className="text-base mb-4">Real-Time Server Mem and disk Load</p>
       <LineChart
         width={300}
         height={150}
@@ -69,7 +69,7 @@ const CpuLoadChart: React.FC = () => {
         <Line type="monotone" dataKey="mem" stroke="#FF33A8" dot={false} />
         <Line type="monotone" dataKey="disk" stroke="#FFA533" dot={false} />
       </LineChart>
-      <p className="text-base mb-4">Real-Time Network (ms)</p>
+      <p className="text-base mb-4">Real-Time Server Network latency</p>
       <LineChart
         width={300}
         height={150}
@@ -81,6 +81,8 @@ const CpuLoadChart: React.FC = () => {
         <Tooltip />
         <Line type="monotone" dataKey="ms" stroke="#33FF57" dot={false} />
       </LineChart>
+      <p className='border-t font-bold'>About this Server</p>
+      <p className='text-xs font-light'>This self-hosted mini PC server, embedded within a meticulously optimized home network, operates as a high-efficiency compute node—balancing power, performance, and scalability. Engineered for resilience, it dynamically orchestrates workloads while real-time telemetry monitors CPU utilization, thermal thresholds, memory allocation, disk integrity, and network responsiveness. A compact powerhouse, seamlessly bridging edge computing with home-lab infrastructure. ⚡</p>
       
     </div>
   );
