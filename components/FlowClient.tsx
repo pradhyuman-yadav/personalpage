@@ -1,9 +1,9 @@
-// app/flow-example/FlowClient.tsx
 'use client';
 
 import React from 'react';
 import ReactFlow, { Background, Controls, useNodesState, useEdgesState } from 'reactflow';
 import 'reactflow/dist/base.css'
+import '@xyflow/react/dist/style.css';
 
 const initialNodes = [
   { id: '1', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },

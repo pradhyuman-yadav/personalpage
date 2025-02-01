@@ -8,9 +8,10 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import NavMenu from "@/components/NavMenu";
+import NavMenu, { ModeToggle } from "@/components/NavMenu";
 import Link from "next/link";
 import CpuLoadChart from "@/components/LoadChart";
+import { Button } from "@/components/ui/button";
 
 const inconsolata = Inconsolata({
   subsets: ["latin"],
@@ -23,21 +24,24 @@ export const metadata: Metadata = {
 };
 
 const info = (
-  <>
-    <HoverCard>
-      <HoverCardTrigger asChild>
-        <DesktopIcon />
-      </HoverCardTrigger>
-      <HoverCardContent className="w-80">
-        <div className="flex justify-between space-x-4">
-          <div className="space-y-1">
-            <CpuLoadChart />
+  <div className="flex items-center">
+    <div className="p-4">
+      <HoverCard>
+        <HoverCardTrigger asChild>
+          <DesktopIcon />
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80">
+          <div className="flex justify-between">
+            <div className="space-y-1">
+              <CpuLoadChart />
+            </div>
           </div>
-        </div>
-      </HoverCardContent>
-    </HoverCard>
-  </>
+        </HoverCardContent>
+      </HoverCard>
+    </div>
+  </div>
 );
+
 const header = (
   <header>
     <div className="text-right p-8 my-6 rounded-md">

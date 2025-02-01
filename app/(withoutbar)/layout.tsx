@@ -22,20 +22,22 @@ export const metadata: Metadata = {
 };
 
 const info = (
-  <>
-    <HoverCard>
-      <HoverCardTrigger asChild>
-        <DesktopIcon />
-      </HoverCardTrigger>
-      <HoverCardContent className="w-80">
-        <div className="flex justify-between space-x-4">
-          <div className="space-y-1">
-            <CpuLoadChart />
+  <div className="flex items-center">
+    <div className="p-4">
+      <HoverCard>
+        <HoverCardTrigger asChild>
+          <DesktopIcon />
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80">
+          <div className="flex justify-between">
+            <div className="space-y-1">
+              <CpuLoadChart />
+            </div>
           </div>
-        </div>
-      </HoverCardContent>
-    </HoverCard>
-  </>
+        </HoverCardContent>
+      </HoverCard>
+    </div>
+  </div>
 );
 const header = (
   <header>
