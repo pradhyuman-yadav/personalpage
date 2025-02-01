@@ -8,10 +8,9 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import NavMenu, { ModeToggle } from "@/components/NavMenu";
+import NavMenu from "@/components/NavMenu";
 import Link from "next/link";
 import CpuLoadChart from "@/components/LoadChart";
-import { Button } from "@/components/ui/button";
 
 const inconsolata = Inconsolata({
   subsets: ["latin"],
