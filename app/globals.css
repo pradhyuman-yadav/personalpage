@@ -1,9 +1,11 @@
+@import url('../components/flow/xy-theme.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'Inconsolata', monospace;
+  font-family: "Inconsolata", monospace;
 }
 
 @layer base {
@@ -33,6 +35,7 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --padding: 0.5rem;
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -70,3 +73,86 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .react-flow {
+    /* Theme variables using Tailwind CSS variables */
+    --xy-theme-selected: hsl(var(--primary));
+    --xy-theme-hover: hsl(var(--accent));
+    --xy-theme-edge-hover: hsl(var(--primary));
+    --xy-theme-color-focus: hsl(var(--ring));
+
+    /* Node styling */
+    --xy-node-border-default: 1px solid hsl(var(--border));
+    --xy-node-boxshadow-default: 0px 3.54px 4.55px 0px rgba(0, 0, 0, 0.05),
+      0px 3.54px 4.55px 0px rgba(0, 0, 0, 0.13),
+      0px 0.51px 1.01px 0px rgba(0, 0, 0, 0.2);
+    --xy-node-border-radius-default: calc(var(--radius) * 4);
+    --xy-node-border-padding-default: calc(var(--padding) * 400);
+
+    /* Handle styling */
+    --xy-handle-background-color-default: hsl(var(--background));
+    --xy-handle-border-color-default: hsl(var(--border));
+
+    /* Edge styling */
+    --xy-edge-label-color-default: hsl(var(--foreground));
+    --xy-edge-path-color-default: hsl(var(--border));
+  }
+
+  /* Dark mode overrides */
+  .dark .react-flow {
+    --xy-node-boxshadow-default: 0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.05),
+      0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.13),
+      0px 0.51px 1.01px 0px rgba(255, 255, 255, 0.1);
+    --xy-edge-path-color-default: hsl(var(--muted-foreground));
+  }
+
+  /* React Flow container */
+  .react-flow {
+    @apply bg-background;
+  }
+
+  /* Node styling */
+  .react-flow__node {
+    @apply bg-card text-card-foreground;
+    box-shadow: var(--xy-node-boxshadow-default);
+    border: var(--xy-node-border-default);
+    border-radius: var(--xy-node-border-radius-default);
+    padding: var(--xy-node-border-padding-default);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .react-flow__node.selectable:focus {
+    box-shadow: 0 0 0 2px var(--xy-theme-color-focus);
+  }
+
+  .react-flow__node.selectable.selected {
+    border-color: var(--xy-theme-selected);
+  }
+
+  /* Edge styling */
+  .react-flow__edge-path {
+    stroke: var(--xy-edge-path-color-default);
+  }
+
+  .react-flow__edge.selectable:hover .react-flow__edge-path,
+  .react-flow__edge.selectable.selected .react-flow__edge-path {
+    stroke: var(--xy-theme-edge-hover);
+  }
+
+  /* Handle styling */
+  .react-flow__handle {
+    background: var(--xy-handle-background-color-default);
+    border-color: var(--xy-handle-border-color-default);
+  }
+
+  /* Background pattern */
+  .react-flow__background {
+    @apply dark:[mask-image:linear-gradient(to_bottom,black_30%,transparent_75%)];
+  }
+}
+
+
