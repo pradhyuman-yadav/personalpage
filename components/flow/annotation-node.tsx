@@ -1,14 +1,14 @@
-import { type Node, type NodeProps } from "@xyflow/react";
+import { type NodeProps } from "reactflow";
 import { CSSProperties } from "react";
 
-type AnnotationNode = Node<{
+type AnnotationNodeData = {
   label: string;
   level?: number;
   arrow: string;
   arrowStyle?: CSSProperties; 
-}>;
+};
 
-export function AnnotationNode({ data }: NodeProps<AnnotationNode>) {
+export const AnnotationNode: React.FC<NodeProps<AnnotationNodeData>> = ({ data }: NodeProps<AnnotationNodeData>) => {
   return (
     <div className="relative flex max-w-[180px] items-start p-2 text-sm text-secondary-foreground">
       {typeof data.level === 'number' && (

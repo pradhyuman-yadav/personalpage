@@ -11,15 +11,11 @@ import ReactFlow, {
   Connection,
   Edge,
   ReactFlowProvider,
-  useNodes,
 } from "reactflow";
 
 import { AnnotationNode } from "@/components/flow/annotation-node";
 import { ButtonEdge } from "@/components/flow/button-edge";
-import {
-  nodes as initialNodes,
-  edges as initialEdges,
-} from "@/components/flow/initial-elements";
+import initialElements from "@/components/flow/initial-elements";
 
 import "reactflow/dist/style.css";
 
@@ -31,38 +27,39 @@ const edgeTypes = {
   button: ButtonEdge,
 };
 
-interface NodeData {
-  level?: number;
-  label: string;
-  arrowStyle?: {
-    right: number;
-    bottom: number;
-    transform: string;
-    left?: number;
-  };
-}
+// interface NodeData {
+//   level?: number;
+//   label: React.ReactNode;
+//   arrowStyle?: {
+//     display?: string;
+//     top?: number;
+//     left?: number;
+//     transform?: string;
+//     bottom?: number;
+//   };
+// }
 
-interface Node {
-  id: string;
-  type: string;
-  data: NodeData;
-  position: { x: number; y: number };
-  draggable?: boolean;
-  selectable?: boolean;
-  style?: React.CSSProperties;
-  parentId?: string;
-  extent?: string;
-}
+// interface Node {
+//   id: string;
+//   type: string;
+//   data: NodeData;
+//   position: { x: number; y: number };
+//   draggable?: boolean;
+//   selectable?: boolean;
+//   style?: React.CSSProperties;
+//   parentId?: string;
+//   extent?: string;
+// }
 
-const nodeClassName = (node: Node): string => node.type;
+// const nodeClassName = (node: Node): string => node.type;
 
 function Flow() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, , onNodesChange] = useNodesState(initialElements.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialElements.edges);
 
   const onConnect = useCallback((connection: Edge | Connection) => {
     setEdges((eds) => addEdge(connection, eds));
-  }, []);
+  }, [setEdges]);
 
   return (
     <ReactFlow
@@ -82,7 +79,17 @@ function Flow() {
   );
 }
 
-function FlowClient(props: any) {
+interface FlowClientProps {
+  [key: string]: unknown;
+}
+
+/**
+ * FlowClient component renders a flow diagram using ReactFlowProvider.
+ *
+ * @param {FlowClientProps} props - The properties passed to the FlowClient component.
+ * @returns {JSX.Element} The rendered FlowClient component.
+ */
+function FlowClient(props: FlowClientProps) {
   return (
     <div className="w-full h-lvh">
       <ReactFlowProvider>
