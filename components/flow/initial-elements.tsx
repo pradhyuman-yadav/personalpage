@@ -14,7 +14,7 @@ export const nodes = [
           Projects
         </div>
       ),
-      arrowStyle: { display: "none" },
+      arrowStyle: { display: "none", },
     },
     position: { x: 720, y: 20 },
   },
@@ -47,7 +47,7 @@ export const nodes = [
         </div>
       ),
       // Adjust the transform to anchor the annotation to the edge
-      arrowStyle: { top: 0, left: 0, transform: "translate(20px, 80px)" },
+      arrowStyle: { display: "none",},
     },
     position: { x: 100, y: 120 },
   },
@@ -79,7 +79,7 @@ export const nodes = [
           </div>
         </div>
       ),
-      arrowStyle: { top: 0, left: 0, transform: "translate(20px, 80px)" },
+      arrowStyle: { display: "none",},
     },
     position: { x: 300, y: 120 },
   },
@@ -108,7 +108,7 @@ export const nodes = [
           </div>
         </div>
       ),
-      arrowStyle: { top: 0, left: 0, transform: "translate(20px, 80px)" },
+      arrowStyle: { display: "none",},
     },
     position: { x: 500, y: 120 },
   },
@@ -137,11 +137,7 @@ export const nodes = [
           </div>
         </div>
       ),
-      arrowStyle: {
-        bottom: 0,
-        left: 0,
-        transform: "translate(5px, 25px) scale(1, -1) rotate(100deg)",
-      },
+      arrowStyle: { display: "none",},
     },
     position: { x: 700, y: 120 },
   },
@@ -169,7 +165,7 @@ export const nodes = [
           </div>
         </div>
       ),
-      arrowStyle: { top: 0, left: 0, transform: "translate(15px, 70px)" },
+      arrowStyle: { display: "none",},
     },
     position: { x: 700, y: 370 },
   },
@@ -198,11 +194,7 @@ export const nodes = [
           </div>
         </div>
       ),
-      arrowStyle: {
-        bottom: 0,
-        left: 0,
-        transform: "translate(10px, 30px) scale(1, -1) rotate(90deg)",
-      },
+      arrowStyle: { display: "none",},
     },
     position: { x: 500, y: 370 },
   },
@@ -231,7 +223,7 @@ export const nodes = [
           </div>
         </div>
       ),
-      arrowStyle: { top: 0, left: 0, transform: "translate(20px, 60px)" },
+      arrowStyle: { display: "none",},
     },
     position: { x: 300, y: 370 },
   },

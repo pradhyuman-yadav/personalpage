@@ -27,32 +27,6 @@ const edgeTypes = {
   button: ButtonEdge,
 };
 
-// interface NodeData {
-//   level?: number;
-//   label: React.ReactNode;
-//   arrowStyle?: {
-//     display?: string;
-//     top?: number;
-//     left?: number;
-//     transform?: string;
-//     bottom?: number;
-//   };
-// }
-
-// interface Node {
-//   id: string;
-//   type: string;
-//   data: NodeData;
-//   position: { x: number; y: number };
-//   draggable?: boolean;
-//   selectable?: boolean;
-//   style?: React.CSSProperties;
-//   parentId?: string;
-//   extent?: string;
-// }
-
-// const nodeClassName = (node: Node): string => node.type;
-
 function Flow() {
   const [nodes, , onNodesChange] = useNodesState(initialElements.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialElements.edges);
