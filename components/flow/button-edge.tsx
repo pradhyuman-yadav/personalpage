@@ -3,7 +3,7 @@ import {
   EdgeLabelRenderer,
   EdgeProps,
   getBezierPath,
-} from "reactflow";
+} from "@xyflow/react";
 
 import { Button } from "@/components/ui/button";
 import { MousePointerClick } from "lucide-react";

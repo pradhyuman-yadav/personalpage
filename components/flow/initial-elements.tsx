@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { MarkerType } from "@xyflow/react";
 
 export const nodes = [
@@ -28,7 +28,7 @@ export const nodes = [
       arrowStyle: { display: "none" } // Changed to JSX
     },
     position: { x: 100, y: 200 },
-    className: "p-2",
+    className: "p-2 text-black dark:text-black",
   },
   {
     id: "annotation-A",
@@ -61,7 +61,7 @@ export const nodes = [
       arrowStyle: { display: "none" } // Changed to JSX
     },
     position: { x: 300, y: 200 },
-    className: "p-2",
+    className: "p-2 text-black dark:text-black",
   },
   {
     id: "annotation-B",
@@ -90,7 +90,7 @@ export const nodes = [
     type: "default",
     data: { label: <div>Trading with ML</div>, arrowStyle: { display: "none" } }, // Removed quotes
     position: { x: 500, y: 200 },
-    className: "p-2",
+    className: "p-2 text-black dark:text-black",
   },
   {
     id: "annotation-C",
@@ -119,7 +119,7 @@ export const nodes = [
     type: "default",
     data: { label: <div>Full Body Mo-Cap</div>, arrowStyle: { display: "none" } }, // Removed quotes
     position: { x: 700, y: 200 },
-    className: "p-2",
+    className: "p-2 text-black dark:text-black",
   },
   {
     id: "annotation-D",
@@ -147,7 +147,7 @@ export const nodes = [
     type: "default",
     data: { label: <div>AI Roommate Assistant</div>, arrowStyle: { display: "none" } }, // Removed quotes
     position: { x: 700, y: 300 },
-    className: "p-2",
+    className: "p-2 text-black dark:text-black",
   },
   {
     id: "annotation-E",
@@ -176,7 +176,7 @@ export const nodes = [
     type: "default",
     data: { label: <div>Wild Animal Detection</div>, arrowStyle: { display: "none" } }, // Removed quotes
     position: { x: 500, y: 300 },
-    className: "p-2",
+    className: "p-2 text-black dark:text-black",
   },
   {
     id: "annotation-F",
@@ -205,7 +205,7 @@ export const nodes = [
     type: "default",
     data: { label: <div>AI Instagram Model</div>, arrowStyle: { display: "none" } }, // Removed quotes
     position: { x: 300, y: 300 },
-    className: "p-2",
+    className: "p-2 text-black dark:text-black",
   },
   {
     id: "annotation-G",
@@ -223,7 +223,11 @@ export const nodes = [
           </div>
         </div>
       ),
-      arrowStyle: { display: "none",},
+      arrowStyle: {
+        right: 0,
+        bottom: 0,
+        transform: "translate(-30px,10px) rotate(-80deg)",
+      },
     },
     position: { x: 300, y: 370 },
   },

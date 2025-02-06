@@ -34,6 +34,7 @@ body {
     --chart-5: 27 87% 67%; */
     --radius: 0.5rem;
     --padding: 0.5rem;
+    --annotation-text-color: #683bfa;
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -60,6 +61,7 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%; */
+    --annotation-text-color: #000000;
   }
 }
 
@@ -136,12 +138,13 @@ body {
   }
 
   /* Dark mode overrides */
-  .dark .react-flow {
-    --xy-node-boxshadow-default: 0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.05),
-      0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.13),
-      0px 0.51px 1.01px 0px rgba(255, 255, 255, 0.1);
-    --xy-edge-path-color-default: hsl(var(--muted-foreground));
-  }
+  .react-flow.dark { 
+    --xy-node-boxshadow-default: 
+    0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.05), /* light shadow */
+    0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.13), /* medium shadow */
+    0px 0.51px 1.01px 0px rgba(255, 255, 255, 0.2);  /* smallest shadow */  
+    --xy-theme-color-focus: #535353;
+}
 
   .text-input-node {
     &__input {
@@ -164,53 +167,42 @@ body {
     }
   }
 
+  .react-flow__node-annotation {
+    @apply text-sm; /* Use Tailwind's text-sm for font-size */
+    @apply w-[200px];    /* Use Tailwind's width utilities */
+    @apply absolute;
+    @apply font-mono;  /* Use Tailwind's font-mono for monospace */
+    @apply text-left;    /* Use Tailwind's text-left */
+    @apply bg-transparent; /* Use Tailwind's bg-transparent */
+    @apply border-none;    /* Use Tailwind's border-none */
+    @apply shadow-none;   /* Use Tailwind's shadow-none */
+    color: var(--annotation-text-color); /* Use CSS variable for color */
 
-  /* Node styling */
-  /* .react-flow__node {
-    @apply bg-card text-card-foreground;
-    box-shadow: var(--xy-node-boxshadow-default);
-    border: var(--xy-node-border-default);
-    border-radius: var(--xy-node-border-radius-default);
-    padding: var(--xy-node-border-padding-default);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+      /* No direct equivalent for padding in this context.  Handle in component if needed */
+    & .annotation-content {
+        @apply flex;          /* Use Tailwind's flex */
+        @apply items-center; /* Use Tailwind to vertically center content */
+    }
+
+    & .annotation-level {
+        @apply mr-1;          /* Use Tailwind's mr-1 for margin-right */
+    }
+
+    & .annotation-arrow {
+        @apply absolute;
+        @apply text-2xl;    /* Use Tailwind's text-2xl for font-size */
+    }
   }
-
-  .react-flow__node.selectable:focus {
-    box-shadow: 0 0 0 2px var(--xy-theme-color-focus);
-  }
-
-  .react-flow__node.selectable.selected {
-    border-color: var(--xy-theme-selected);
-  } */
-
-  /* Edge styling */
-  /* .react-flow__edge-path {
-    stroke: var(--xy-edge-path-color-default);
-  }
-
-  .react-flow__edge.selectable:hover .react-flow__edge-path,
-  .react-flow__edge.selectable.selected .react-flow__edge-path {
-    stroke: var(--xy-theme-edge-hover);
-  } */
-
-  /* Handle styling */
-  /* .react-flow__handle {
-    background: var(--xy-handle-background-color-default);
-    border-color: var(--xy-handle-border-color-default);
-  } */
-
-  /* Background pattern */
-  /* .react-flow__background {
-    @apply dark:[mask-image:linear-gradient(to_bottom,black_30%,transparent_75%)];
-  } */
 }
 
 @layer utilities {
   .resizer-node__handles {
-    @apply absolute bottom-0 w-full left-0 flex justify-evenly;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    left: 0;
+    display: flex;
+    justify-content: space-evenly;
   }
 }
 
