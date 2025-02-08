@@ -18,13 +18,12 @@ pipeline {
         stage('Build Next.js Image') {
             steps {
                 script {
-                    def commitHash = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                     sh """
                     docker build \\
                         --build-arg NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \\
                         --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \\
                         --build-arg SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY}" \\
-                        -t my-nextjs-app:${commitHash} .
+                        -t my-nextjs-app:latest .
                     """
                 }
             }
@@ -33,7 +32,6 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    def commitHash = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                     // Stop/remove any old container (with proper error handling)
                     try {
                         sh 'docker rm -f nextjs_container'
@@ -43,7 +41,7 @@ pipeline {
                     }
 
                     // Run the new container, using --env-file for runtime secrets
-                    sh "docker run -v /proc:/host_proc -e HOST_PROC=/host_proc -d --name nextjs_container -p 3000:3000 --env-file /home/pradhyuman/jenkins-config/envFiles/.env.production my-nextjs-app:${commitHash}"
+                    sh 'docker run -v /proc:/host_proc -e HOST_PROC=/host_proc -d --name nextjs_container -p 3000:3000 --env-file /home/pradhyuman/jenkins-config/envFiles/.env.production my-nextjs-app:latest'
                 }
             }
         }
