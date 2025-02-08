@@ -30,8 +30,13 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
+                withCredentials([
+                    string(credentialsId: 'NEXT_PUBLIC_SUPABASE_URL', variable: 'NEXT_PUBLIC_SUPABASE_URL'),
+                    string(credentialsId: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', variable: 'NEXT_PUBLIC_SUPABASE_ANON_KEY')
+                    string(credentialsId: 'SUPABASE_SERVICE_ROLE_KEY', variable: 'SUPABASE_SERVICE_ROLE_KEY')
+                ]) 
                 // Build the Docker image using the Dockerfile in the repo
-                sh 'docker build -t --env-file /home/pradhyuman/jenkins-config/envFiles/.env.production my-nextjs-app:latest .'
+                {sh 'docker build -t my-nextjs-app:latest .'}
             }
         }
 
