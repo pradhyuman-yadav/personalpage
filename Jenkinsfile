@@ -31,7 +31,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 // Build the Docker image using the Dockerfile in the repo
-                sh 'docker build -t my-nextjs-app:latest .'
+                sh 'docker build -t --env-file /home/pradhyuman/jenkins-config/envFiles/.env.production my-nextjs-app:latest .'
             }
         }
 
