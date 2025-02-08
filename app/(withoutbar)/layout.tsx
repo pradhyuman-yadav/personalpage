@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/hover-card";
 import NavMenu from "@/components/NavMenu";
 import CpuLoadChart from "@/components/LoadChart";
+import { Toaster } from "@/components/ui/toaster";
 
 const inconsolata = Inconsolata({
   subsets: ["latin"],
@@ -42,11 +43,6 @@ const info = (
 const header = (
   <header>
     <div className="text-right p-8 my-6 rounded-md">
-      {/* <Link href="/">
-        <h1 className="scroll-m-20 sm:text-4xl md:text-6xl lg:text-9xl font-bold mt-4">
-          Pradhyuman
-        </h1>
-      </Link> */}
       <div className="justify-items-end py-5">
         <NavMenu />
       </div>
@@ -57,7 +53,7 @@ const header = (
 const footer = (
   <footer>
     <div className="border-t border-slate-400 mt-12 py-6 text-center text-slate-400">
-    <h3 className="justify-self-end">- by Pradhyuman</h3>
+      <h3 className="justify-self-end">- by Pradhyuman</h3>
     </div>
   </footer>
 );
@@ -80,7 +76,10 @@ export default function RootLayout({
           <div className="top-2 right-2 absolute">{info}</div>
           <div className="mx-auto  max-w-7xl px-6">
             {header}
-            <main>{children}</main>
+            <main>
+              {children}
+              <Toaster />
+            </main>
             {footer}
           </div>
         </ThemeProvider>

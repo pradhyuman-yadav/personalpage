@@ -5,7 +5,6 @@ import { useCallback } from "react";
 import {
   ReactFlow,
   addEdge,
-  MiniMap,
   Controls,
   Background,
   useNodesState,
@@ -43,6 +42,7 @@ function Flow() {
         addEdge(connection, eds).map((edge) => {
           // Destructure out the style property so it is not carried over
           const { style, ...rest } = edge;
+          console.log("style", style);
           return {
             ...rest,
             label: String(edge.label ?? ""),

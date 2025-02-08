@@ -12,6 +12,7 @@ import Link from "next/link";
 import CpuLoadChart from "@/components/LoadChart";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/NavMenu";
+import { Toaster } from "@/components/ui/toaster";
 
 const inconsolata = Inconsolata({
   subsets: ["latin"],
@@ -71,7 +72,10 @@ export default function RootLayout({
         >
           <div className=" top-2 right-4 absolute z-50">{info}</div>
           <div className="">
-            <main>{children}</main>
+            <main>
+              {children}
+              <Toaster />
+            </main>
           </div>
         </ThemeProvider>
       </body>

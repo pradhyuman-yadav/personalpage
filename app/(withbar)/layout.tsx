@@ -11,6 +11,7 @@ import {
 import NavMenu from "@/components/NavMenu";
 import Link from "next/link";
 import CpuLoadChart from "@/components/LoadChart";
+import { Toaster } from "@/components/ui/toaster"
 
 const inconsolata = Inconsolata({
   subsets: ["latin"],
@@ -43,12 +44,13 @@ const info = (
 
 const header = (
   <header>
-    <div className="text-right p-8 my-6 rounded-md">
-      <Link href="/">
+    <div className="text-right p-8 my-6 rounded-md ">
+      <div className="hidden sm:block"><Link href="/">
         <h1 className="scroll-m-20 sm:text-4xl md:text-6xl lg:text-9xl font-bold mt-4">
           Pradhyuman
         </h1>
-      </Link>
+      </Link></div>
+      
       <div className="justify-items-end py-5">
         <NavMenu />
       </div>
@@ -82,7 +84,7 @@ export default function RootLayout({
           <div className="top-2 right-2 absolute">{info}</div>
           <div className="mx-auto  max-w-7xl px-6">
             {header}
-            <main>{children}</main>
+            <main>{children}<Toaster /></main>
             {footer}
           </div>
         </ThemeProvider>

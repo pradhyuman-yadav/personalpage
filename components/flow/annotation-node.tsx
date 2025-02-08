@@ -1,4 +1,4 @@
-import { type NodeProps, type Node } from "@xyflow/react";
+import { type NodeProps} from "@xyflow/react";
 import { AnnotationNodeType } from "./AnnotationNodeTypes";
 
 export const AnnotationNode: React.FC<NodeProps<AnnotationNodeType>> = ({
