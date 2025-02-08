@@ -42,7 +42,7 @@ ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY=$NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
 
 # Build the NestJS application
-RUN npm run build
+# RUN npm run build
 
 # --- Stage 2: Production ---
 FROM node:18-slim AS runner
