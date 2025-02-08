@@ -31,16 +31,16 @@ RUN npm run build
 # CMD ["npm", "start"]
 
 # --- Production Stage ---
-FROM node:18-slim
-WORKDIR /app
+# FROM node:18-slim
+# WORKDIR /app
 
-ENV NODE_ENV=production
+# ENV NODE_ENV=production
 
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
+# COPY --from=builder /app/package*.json ./
+# COPY --from=builder /app/.next ./.next
+# COPY --from=builder /app/public ./public
 
-RUN npm ci --omit=dev --omit=optional
+# RUN npm ci --omit=dev --omit=optional
 
 EXPOSE 3000
 CMD ["npm", "start"]
