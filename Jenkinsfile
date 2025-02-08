@@ -41,7 +41,7 @@ pipeline {
                     }
 
                     // Run the new container, using --env-file for runtime secrets
-                    sh 'docker run -v /proc:/host_proc -e HOST_PROC=/host_proc -d --name nextjs_container -p 3000:3000 --env-file /home/pradhyuman/jenkins-config/envFiles/.env.production my-nextjs-app:latest'
+                    sh 'docker run -v /proc:/host_proc -e HOST_PROC=/host_proc -d --name nextjs_container -p 3000:3000 --env-file /home/pradhyuman/jenkins-config/envFiles/.env my-nextjs-app:latest'
                 }
             }
         }
