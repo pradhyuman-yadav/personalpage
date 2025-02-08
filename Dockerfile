@@ -64,4 +64,4 @@ RUN npm ci --omit=dev --omit=optional  # Use ci for consistent installs
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "dist/main"]
+CMD ["node", "start"]
