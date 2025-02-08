@@ -17,6 +17,11 @@ pipeline {
 
         stage('Build Next.js') {
             steps {
+                withCredentials([
+                    string(credentialsId: 'NEXT_PUBLIC_SUPABASE_URL', variable: 'NEXT_PUBLIC_SUPABASE_URL'),
+                    string(credentialsId: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', variable: 'NEXT_PUBLIC_SUPABASE_ANON_KEY')
+                ])
+            }{
                 sh 'npm run build'
             }
         }
