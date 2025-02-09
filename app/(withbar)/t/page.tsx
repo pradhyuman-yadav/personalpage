@@ -45,6 +45,7 @@ export default function UrlSubmissionForm() {
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     try {
+      console.log("Form data:", data);
       const response = await axios.post("/api/shorten", {
         url: data.url,
         expirationHours: data.expirationHours, // Send expirationHours to the API
@@ -52,6 +53,7 @@ export default function UrlSubmissionForm() {
 
       const result = response.data;
       const shortUrl = `${window.location.origin}/t/${result.slug}`;
+      console.log("Short URL:", shortUrl);
       setShortUrl(shortUrl);
 
       toast({
@@ -64,13 +66,6 @@ export default function UrlSubmissionForm() {
       });
     } catch (error: unknown) {
       console.error("URL submission error:", error);
-      // toast({
-      //   title: "Unexpected error",
-      //   description:
-      //     error.response?.data?.message ||
-      //     "An error occurred while shortening the URL.",
-      //   variant: "destructive",
-      // });
       if (axios.isAxiosError(error)) {
         toast({
           title: "Unexpected error",
