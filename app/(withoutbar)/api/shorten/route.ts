@@ -1,4 +1,4 @@
-// app/api/shorten/route.ts
+// /api/shorten/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 

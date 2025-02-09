@@ -42,7 +42,7 @@ pipeline {
 
                     // Run the new container, using --env-file for runtime secrets
                     sh """
-                    docker run -v /proc:/host_proc -e HOST_PROC=/host_proc -d \\
+                    docker run --network host -v /proc:/host_proc -e HOST_PROC=/host_proc -d \\
                         --name nextjs_container \\
                         -p 3000:3000 \\
                         -e NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \\
