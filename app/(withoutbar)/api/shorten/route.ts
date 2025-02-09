@@ -7,6 +7,8 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function POST(request: Request) {
   try {
+    console.log(supabaseUrl, supabaseServiceRoleKey);
+
     const body = await request.json();
     const { url, expirationHours } = body; // Get expirationHours
 
