@@ -182,7 +182,7 @@ export default function TOTPGenerator() {
             </Alert>
             <Card>
                 <CardHeader>
-                    <CardTitle>TOTP Generator</CardTitle>
+                    <CardTitle>2 Factor Authenticator Code Generator</CardTitle>
                     <CardDescription>Generate Time-Based One-Time Passwords</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
