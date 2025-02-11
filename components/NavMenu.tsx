@@ -41,8 +41,8 @@ export default function NavigationMenuDemo() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isSmallScreen, setIsSmallScreen] = React.useState(false); // State for screen size
 
-    // Use useEffect to check screen size on mount and on resize
-    React.useEffect(() => {
+  // Use useEffect to check screen size on mount and on resize
+  React.useEffect(() => {
     const checkScreenSize = () => {
       setIsSmallScreen(window.innerWidth < 640); // sm breakpoint in Tailwind
     };
@@ -53,7 +53,6 @@ export default function NavigationMenuDemo() {
 
     return () => window.removeEventListener("resize", checkScreenSize); // Cleanup
   }, []);
-
 
   return (
     <>
@@ -72,7 +71,7 @@ export default function NavigationMenuDemo() {
               </Button>
             </CollapsibleTrigger>
           </div>
-            <CollapsibleContent className="space-y-2 p-4">
+          <CollapsibleContent className="space-y-2 p-4">
             {/* Menu Items (Links) -  Use regular Links within CollapsibleContent */}
             <Link href="/" passHref>
               <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
@@ -89,7 +88,7 @@ export default function NavigationMenuDemo() {
                 Projects
               </div>
             </Link>
-             <Link href="https://github.com/pradhyuman-yadav" passHref>
+            <Link href="https://github.com/pradhyuman-yadav" passHref>
               <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
                 Github
               </div>
@@ -102,6 +101,11 @@ export default function NavigationMenuDemo() {
             <Link href="/t" passHref>
               <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
                 URL Shortener
+              </div>
+            </Link>
+            <Link href="/authenticator" passHref>
+              <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
+                Authenticator
               </div>
             </Link>
             <ModeToggle />
@@ -132,18 +136,26 @@ export default function NavigationMenuDemo() {
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="https://github.com/pradhyuman-yadav" legacyBehavior passHref>
+              <Link
+                href="https://github.com/pradhyuman-yadav"
+                legacyBehavior
+                passHref
+              >
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Github
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-                <Link href="https://www.linkedin.com/in/pradhyuman-yadav/" legacyBehavior passHref>
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Linkedin
-                    </NavigationMenuLink>
-                </Link>
+              <Link
+                href="https://www.linkedin.com/in/pradhyuman-yadav/"
+                legacyBehavior
+                passHref
+              >
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  Linkedin
+                </NavigationMenuLink>
+              </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <Link href="/t" legacyBehavior passHref>
@@ -152,9 +164,16 @@ export default function NavigationMenuDemo() {
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
-             <NavigationMenuItem>
-                <ModeToggle />
-              </NavigationMenuItem>
+            <NavigationMenuItem>
+              <Link href="/authenticator" legacyBehavior passHref>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  Authenticator
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <ModeToggle />
+            </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
       )}
