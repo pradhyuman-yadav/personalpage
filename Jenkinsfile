@@ -6,12 +6,13 @@ pipeline {
         NEXT_PUBLIC_SUPABASE_URL = credentials('NEXT_PUBLIC_SUPABASE_URL')
         NEXT_PUBLIC_SUPABASE_ANON_KEY = credentials('NEXT_PUBLIC_SUPABASE_ANON_KEY')
         SUPABASE_SERVICE_ROLE_KEY = credentials('SUPABASE_SERVICE_ROLE_KEY')
+        NEXT_PUBLIC_PASSPHRASE = credentials('NEXT_PUBLIC_PASSPHRASE')
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/pradhyuman-yadav/personalpage.git', branch: 'main' // Replace with your repo/branch
+                git url: 'https://github.com/pradhyuman-yadav/personalpage.git', branch: 'main'
             }
         }
 
@@ -23,6 +24,7 @@ pipeline {
                         --build-arg NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \\
                         --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \\
                         --build-arg SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY}" \\
+                        --build-arg NEXT_PUBLIC_PASSPHRASE="${NEXT_PUBLIC_PASSPHRASE}" \\
                         -t my-nextjs-app:latest .
                     """
                 }
@@ -47,6 +49,7 @@ pipeline {
                         -p 3000:3000 \\
                         -e NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \\
                         -e NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \\
+                        -e NEXT_PUBLIC_PASSPHRASE="${NEXT_PUBLIC_PASSPHRASE}" \\
                         my-nextjs-app:latest
                     """
                 }
