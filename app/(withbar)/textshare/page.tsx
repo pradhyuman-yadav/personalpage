@@ -1,8 +1,7 @@
-// app/textshare/page.tsx
+// app/textshare/page.tsx (Client Component)
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,10 +17,6 @@ import {
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const expirationOptions = [
   { value: '10m', label: '10 Minutes' },
@@ -31,6 +26,7 @@ const expirationOptions = [
   { value: '1mo', label: '1 Month' },
   { value: 'never', label: 'Never' },
 ];
+
 const syntaxHighlightingOptions = [
   { value: 'none', label: 'None' },
   { value: 'javascript', label: 'JavaScript' },
@@ -82,78 +78,39 @@ export default function TextSharePage() {
     }
 
     setLoading(true);
-
     let generatedSlug = slug;
     if (!generatedSlug) {
-      generatedSlug = generateSlug();
+        generatedSlug = generateSlug();
     }
 
 
     try {
-      let expiresAt = null;
+      const response = await fetch('/api/pastes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content,
+          title,
+          slug: generatedSlug, // Send the generated slug
+          expiration,
+          syntax_highlighting: syntaxHighlighting
+        }),
+      });
 
-      if (expiration !== 'never') {
-        const now = new Date();
-        let timeToAdd;
+      const data = await response.json();
 
-        switch (expiration) {
-          case '10m':
-            timeToAdd = 10 * 60 * 1000;
-            break;
-          case '1h':
-            timeToAdd = 60 * 60 * 1000;
-            break;
-          case '1d':
-            timeToAdd = 24 * 60 * 60 * 1000;
-            break;
-          case '1w':
-            timeToAdd = 7 * 24 * 60 * 60 * 1000;
-            break;
-          case '1mo':
-            timeToAdd = 30 * 24 * 60 * 60 * 1000;
-            break;
-          default: //never
-            expiresAt = null;
-        }
-
-        if (timeToAdd) {
-          expiresAt = new Date(now.getTime() + timeToAdd).toISOString();
-        }
-      }
-
-
-      const { error: insertError } = await supabase
-        .from('pastes')
-        .insert([
-          {
-            content,
-            title: title || null,
-            short_id: generatedSlug,
-            expires_at: expiresAt,
-            syntax_highlighting: syntaxHighlighting
-          },
-        ]).select();
-
-      if (insertError) {
-        if (insertError.message?.includes('duplicate key value violates unique constraint')) {
-          setError('Slug already exists.  Try a different slug, or leave it blank to auto-generate.');
-
-        } else {
-          setError(`Error creating paste: ${insertError.message}`);
-        }
+      if (!response.ok) {
+        setError(data.error || 'Failed to create paste');
         return;
       }
-      setSuccess(true);
-      router.push(`/textshare/${generatedSlug}`);
 
+      setSuccess(true);
+      router.push(`/textshare/${data.slug}`); // Use the returned slug
 
     } catch (err) {
-      if(err instanceof Error){
-          setError(`An unexpected error occurred: ${err.message}`);
-      } else {
-        setError(`An unexpected error occurred`);
-      }
-
+      setError(`An unexpected error occurred: ${err}`);
     } finally {
       setLoading(false);
     }

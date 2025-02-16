@@ -1,13 +1,8 @@
-// app/textshare/[slug]/page.tsx
-import { createClient } from "@supabase/supabase-js";
+//app/textshare/[slug]/page.tsx
 import { notFound } from "next/navigation";
 import TextShareDisplay from "./TextShareDisplay";
 import { Metadata } from "next";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+import { supabaseServer } from "@/lib/supabaseClient";
 
 interface TextShare {
   id: number;
@@ -19,16 +14,15 @@ interface TextShare {
   syntax_highlighting: string;
 }
 
-// Optional: Add metadata for better SEO
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const params = await props.params;
   const { slug } = params;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("pastes")
-    .select("title") // Only select necessary fields for metadata
+    .select("title")
     .eq("short_id", slug)
     .single();
 
@@ -40,8 +34,7 @@ export async function generateMetadata(props: {
 
   return {
     title: data.title || "Untitled Text Share",
-    description: `View text share with ID: ${slug}`, // Add a description
-    // Add other metadata as needed (e.g., open graph tags)
+    description: `View text share with ID: ${slug}`,
   };
 }
 
@@ -50,7 +43,8 @@ export default async function TextSharePage(props: {
 }) {
   const params = await props.params;
   const { slug } = params;
-  const { data, error } = await supabase
+
+  const { data, error } = await supabaseServer
     .from("pastes")
     .select("*")
     .eq("short_id", slug)
