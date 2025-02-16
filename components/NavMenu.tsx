@@ -158,19 +158,19 @@ export default function NavigationMenuDemo() {
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/t" legacyBehavior passHref>
+              <Link href="/tools" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  URL Shortener
+                  Tools
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
-            <NavigationMenuItem>
+            {/* <NavigationMenuItem>
               <Link href="/authenticator" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Authenticator
                 </NavigationMenuLink>
               </Link>
-            </NavigationMenuItem>
+            </NavigationMenuItem> */}
             <NavigationMenuItem>
               <ModeToggle />
             </NavigationMenuItem>
