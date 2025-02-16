@@ -48,7 +48,6 @@ pipeline {
                         --name nextjs_container \\
                         -p 3000:3000 \\
                         -e NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \\
-                        -e NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \\
                         -e NEXT_PUBLIC_PASSPHRASE="${NEXT_PUBLIC_PASSPHRASE}" \\
                         my-nextjs-app:latest
                     """
