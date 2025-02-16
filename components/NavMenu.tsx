@@ -98,14 +98,9 @@ export default function NavigationMenuDemo() {
                 Linkedin
               </div>
             </Link>
-            <Link href="/t" passHref>
+            <Link href="/tools" passHref>
               <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                URL Shortener
-              </div>
-            </Link>
-            <Link href="/authenticator" passHref>
-              <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                Authenticator
+                Tools
               </div>
             </Link>
             <ModeToggle />
@@ -164,13 +159,6 @@ export default function NavigationMenuDemo() {
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
-            {/* <NavigationMenuItem>
-              <Link href="/authenticator" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Authenticator
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem> */}
             <NavigationMenuItem>
               <ModeToggle />
             </NavigationMenuItem>
