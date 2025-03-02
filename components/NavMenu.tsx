@@ -103,6 +103,11 @@ export default function NavigationMenuDemo() {
                 Tools
               </div>
             </Link>
+            <Link href="/train-sim" passHref>
+              <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
+                Train Sim
+              </div>
+            </Link>
             <ModeToggle />
           </CollapsibleContent>
         </Collapsible>
@@ -156,6 +161,13 @@ export default function NavigationMenuDemo() {
               <Link href="/tools" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Tools
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <Link href="/train-sim" legacyBehavior passHref>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  Train Sim
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
