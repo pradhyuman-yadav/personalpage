@@ -187,7 +187,7 @@ export default function Home() {
       setLoadingSatisfaction(true); // Set loading to true before the fetch
       try {
         const response = await fetch(
-          "http://0.0.0.0:7000/passengers/satisfaction"
+          "http://localhost:7000/passengers/satisfaction"
         ); // Your FastAPI endpoint
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
