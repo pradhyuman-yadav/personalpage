@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { supabaseClient } from "@/lib/supabaseClient";
 import {
   Table,
   TableBody,
@@ -60,70 +59,79 @@ function PassengerPanel({ initialPassengers }: Props) {
     setPassengers(initialPassengers);
   }, [initialPassengers]);
 
-  // Fetch stations (using the PROXY)
+  //get the stations
   useEffect(() => {
     const fetchStations = async () => {
+      setLoading(true);
       try {
-        const response = await fetch('/api/supabaseProxy/from/stations/select/id,name'); // Use the proxy!
-
-        console.log("response", response);
+        const response = await fetch(
+          "/api/supabaseProxy/stations/select/id,name"
+        );
         if (!response.ok) {
-            const errorData = await response.json();
-            setError(errorData.message || 'Failed to fetch stations')
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // Get *detailed* error information from the response
+          let errorText = await response.text(); // Get the response as text first
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText); // Try to parse as JSON
+            errorText = errorData.error || errorData.message || errorText; // Prioritize specific error messages
+          } catch (parseError) {
+            console.error(
+              "Failed to parse error response as JSON:",
+              parseError
+            );
+            // If it's not JSON, we'll just use the raw text
+          }
+          setError(
+            `Failed to fetch stations: ${response.status} - ${errorText}`
+          );
+          throw new Error(
+            `HTTP error! status: ${response.status},  text: ${errorText}`
+          );
         }
-
         const data = await response.json();
-        setStations(data || []);
-      } catch (error:unknown) {
+        setStations(data);
+      } catch (error: unknown) {
         console.error("Error fetching stations:", error);
         setError(String(error) || "An unknown error occurred"); // Set a user-friendly error message
       } finally {
-        setLoading(false); // Set loading to false in all cases
+        setLoading(false);
       }
     };
-    console.log("Here are the stations:", stations);
 
     fetchStations();
-  }, [stations]);
+  }, []);
 
   // Realtime subscription (unconditionally)
   useEffect(() => {
+    // Connect to the NEW SSE endpoint
+    const eventSource = new EventSource("/api/realtime/subscribe");
 
-    const channel = supabaseClient  //Correct Client
-      .channel("passenger-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "passengers" },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setPassengers((prevPassengers) => [
-              ...prevPassengers,
-              payload.new as Passenger,
-            ]);
-          } else if (payload.eventType === "UPDATE") {
-            setPassengers((prevPassengers) =>
-              prevPassengers.map((passenger) =>
-                passenger.id === payload.new.id
-                  ? (payload.new as Passenger)
-                  : passenger
-              )
-            );
-          } else if (payload.eventType === "DELETE") {
-            setPassengers((prevPassengers) =>
-              prevPassengers.filter(
-                (passenger) => passenger.id !== payload.old.id
-              )
-            );
-          }
-        }
-      )
-      .subscribe();
+    eventSource.onmessage = (event) => {
+      const payload = JSON.parse(event.data);
 
-      console.log("Here are the passengers:", channel);  
+      if (payload.eventType === "INSERT") {
+        setPassengers((prevPassengers) => [...prevPassengers, payload.new]);
+      } else if (payload.eventType === "UPDATE") {
+        setPassengers((prevPassengers) =>
+          prevPassengers.map((passenger) =>
+            passenger.id === payload.new.id ? payload.new : passenger
+          )
+        );
+      } else if (payload.eventType === "DELETE") {
+        setPassengers((prevPassengers) =>
+          prevPassengers.filter((passenger) => passenger.id !== payload.old.id)
+        );
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("EventSource failed:", error);
+      eventSource.close();
+      setError("Realtime connection error.");
+    };
 
     return () => {
-      channel.unsubscribe();
+      eventSource.close();
     };
   }, []);
 
