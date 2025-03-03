@@ -46,7 +46,9 @@ async function handleRequest(
   const pathString = path.join("/");
   try {
     const supabase = createSupabaseAdmin(request); // Create client *inside*
-    let supabaseMethod: any = supabase;
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let supabaseMethod:any = supabase;
     const parts = pathString.split("/");
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
@@ -90,7 +92,7 @@ async function handleRequest(
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Proxy error:", error);
     return new NextResponse(
       JSON.stringify({ message: "Internal Server Error" }),

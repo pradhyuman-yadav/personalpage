@@ -32,9 +32,8 @@ export const createSupabaseAdmin = (request: NextRequest) => { // <--- TAKE Next
                         ...options
                     })
                 },
-                remove(name: string, options: CookieOptions) {
-                    request.cookies.delete(name); // Use request.cookies
-                    //You MUST do this in route handler
+                remove(name: string) {
+                    request.cookies.delete(name);
                     const response = NextResponse.next()
                     response.cookies.delete(name)
                 }

@@ -75,9 +75,9 @@ function PassengerPanel({ initialPassengers }: Props) {
 
         const data = await response.json();
         setStations(data || []);
-      } catch (error:any) {
+      } catch (error:unknown) {
         console.error("Error fetching stations:", error);
-        setError(error.message || "An unknown error occurred"); // Set a user-friendly error message
+        setError(String(error) || "An unknown error occurred"); // Set a user-friendly error message
       } finally {
         setLoading(false); // Set loading to false in all cases
       }
@@ -85,7 +85,7 @@ function PassengerPanel({ initialPassengers }: Props) {
     console.log("Here are the stations:", stations);
 
     fetchStations();
-  }, []);
+  }, [stations]);
 
   // Realtime subscription (unconditionally)
   useEffect(() => {
