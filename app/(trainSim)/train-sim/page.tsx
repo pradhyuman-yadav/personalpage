@@ -145,7 +145,7 @@ export default function Home() {
        // Set loading to true before the fetch
       try {
         const response = await fetch(
-          "http://10.0.0.136:7000/passengers/satisfaction"
+          '/api/proxy/passengers/satisfaction'
         ); // Your FastAPI endpoint
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

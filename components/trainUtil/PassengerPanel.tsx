@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { supabaseClient } from "@/lib/supabaseClient";
 import {
   Table,
   TableBody,
@@ -56,42 +56,39 @@ function PassengerPanel({ initialPassengers }: Props) {
   const [loading, setLoading] = useState(true); // Add loading state
   const [error, setError] = useState<string | null>(null); // Add error state
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  const supabase =
-    supabaseUrl && supabaseAnonKey
-      ? createBrowserClient(supabaseUrl, supabaseAnonKey)
-      : null;
-
   useEffect(() => {
     setPassengers(initialPassengers);
   }, [initialPassengers]);
 
-  // Fetch stations (unconditionally)
+  // Fetch stations (using the PROXY)
   useEffect(() => {
-    if (!supabase) return;
     const fetchStations = async () => {
-      const { data, error: fetchError } = await supabase
-        .from("stations")
-        .select("id, name");
-      if (fetchError) {
-        console.error("Error fetching stations:", fetchError);
-        setError("Failed to fetch stations."); // Set error state
-        setLoading(false);
-        return;
+      try {
+        const response = await fetch('/api/supabaseProxy/from/stations/select/id,name'); // Use the proxy!
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            setError(errorData.message || 'Failed to fetch stations')
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setStations(data || []);
+      } catch (error:any) {
+        console.error("Error fetching stations:", error);
+        setError(error.message || "An unknown error occurred"); // Set a user-friendly error message
+      } finally {
+        setLoading(false); // Set loading to false in all cases
       }
-      setStations(data || []);
-      setLoading(false);
     };
+
     fetchStations();
-  }, [supabase]);
+  }, []);
 
   // Realtime subscription (unconditionally)
   useEffect(() => {
-    if (!supabase) return; // Don't subscribe if supabase client isn't ready
 
-    const channel = supabase
+    const channel = supabaseClient  //Correct Client
       .channel("passenger-changes")
       .on(
         "postgres_changes",
@@ -124,7 +121,7 @@ function PassengerPanel({ initialPassengers }: Props) {
     return () => {
       channel.unsubscribe();
     };
-  }, [supabase]); // Dependency on supabase
+  }, []);
 
   // Group passengers (useMemo - outside any conditional)
   const passengersByStation = useMemo(() => {
@@ -170,9 +167,6 @@ function PassengerPanel({ initialPassengers }: Props) {
         </DialogContent>
       </Dialog>
     );
-  }
-  if (!supabase) {
-    return <div>Error: Supabase configuration is missing.</div>;
   }
 
   return (
