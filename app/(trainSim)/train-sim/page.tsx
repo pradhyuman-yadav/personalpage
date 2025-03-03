@@ -10,6 +10,7 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import ResourceDetailsDrawer from "@/components/trainUtil/ResourceDetailsDrawer";
 import PassengerPanel from "@/components/trainUtil/PassengerPanel";
 import { createBrowserClient } from "@supabase/ssr";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ... (Your interfaces: Station, Train, SimulationUpdateData, SurgeEvent, Route) ...
 interface Station {
@@ -64,7 +65,8 @@ interface Line {
   color: string;
 }
 
-interface Passenger {  // <--- ADD THIS
+interface Passenger {
+  // <--- ADD THIS
   id: string;
   origin_station_id: string;
   destination_station_id: string;
@@ -84,23 +86,40 @@ interface Passenger {  // <--- ADD THIS
   arrival_time: string | null;
 }
 
+interface ButtonWithSkeletonProps {
+  isLoading: boolean; // Explicitly type isLoading as boolean
+  initialPassengers: Passenger[]; // Add initialPassengers prop
+  children: React.ReactNode;
+}
+
+function ButtonWithSkeleton({
+  isLoading,
+  initialPassengers,
+}: ButtonWithSkeletonProps) {
+  return (
+    <>
+      {isLoading ? (
+        <Skeleton className="h-9 w-full" /> // Skeleton for loading state
+      ) : (
+        <PassengerPanel initialPassengers={initialPassengers} /> // Render the actual button content
+      )}
+    </>
+  );
+}
+
 export default function Home() {
   const [currentTime] = useState(0);
   const [trains] = useState<Train[]>([]);
   const [stations] = useState<Station[]>([]);
   const [surgeEvents] = useState<SurgeEvent[]>([]);
   const [isAddStationDialogOpen, setIsAddStationDialogOpen] = useState(false);
-  // const [selectedResource, setSelectedResource] = useState<{
-  //   type: "station" | "train" | null;
-  //   data: any;
-  // } | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [routes] = useState<Route[]>([]);
   const [lines] = useState<Line[]>([]);
   const [initialPassengers, setInitialPassengers] = useState<Passenger[]>([]);
   const [satisfaction, setSatisfaction] = useState<number>(100); // Initial satisfaction
   const [loadingSatisfaction, setLoadingSatisfaction] = useState(true); // Add a loading state
-
+  const [isLoading, setIsLoading] = useState(true);
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -114,95 +133,30 @@ export default function Home() {
         console.error("Error fetching initial passengers:", error);
       } else {
         setInitialPassengers(data || []);
+        setIsLoading(false);
       }
     };
     fetchInitialPassengers();
   }, [supabase]);
 
-  // useEffect(() => {
-  //   const socket = io("http://localhost:3001");
-
-  //   socket.on("connect", () => {
-  //     console.log("Connected to server");
-  //     // NO initial passenger fetch here!
-  //   });
-
-  //   socket.on(
-  //     "initialData",
-  //     (data: { stations: Station[]; lines: any[]; routes: Route[] }) => {
-  //       setStations(data.stations);
-  //       setRoutes(data.routes);
-  //       setLines(data.lines);
-  //     }
-  //   );
-
-  //   socket.on("simulationUpdate", (data: SimulationUpdateData) => {
-  //     setCurrentTime(data.time);
-  //     setSurgeEvents(data.surgeEvents || []);
-
-  //     setStations((prevStations) =>
-  //       prevStations.map((station) => {
-  //         const updatedStation = data.stations.find((s) => s.id === station.id);
-  //         const isSurging = data.surgeEvents
-  //           ? data.surgeEvents.some((event) =>
-  //               event.target_station_ids.includes(station.id)
-  //             )
-  //           : false;
-  //         return updatedStation
-  //           ? { ...station, ...updatedStation, is_surging: isSurging }
-  //           : { ...station, is_surging: isSurging };
-  //       })
-  //     );
-
-  //     setTrains((prevTrains) =>
-  //       prevTrains.map((train) => {
-  //         const updatedTrain = data.trains.find((t) => t.id === train.id);
-  //         return updatedTrain ? { ...train, ...updatedTrain } : train;
-  //       })
-  //     );
-  //   });
-
-  //   socket.on("stationAdded", (newStation: Station) => {
-  //     setStations((prevStations) => [...prevStations, newStation]);
-  //   });
-
-  //   socket.on("stationDeleted", (stationId: string) => {
-  //     setStations((prevStations) =>
-  //       prevStations.filter((station) => station.id !== stationId)
-  //     );
-  //   });
-
-  //   socket.on("disconnect", () => {
-  //     console.log("Disconnected from server");
-  //   });
-
-  //   return () => {
-  //     socket.disconnect();
-  //   };
-  // }, []); // Empty dependency array: runs only on mount
-
   // Fetch satisfaction data
   useEffect(() => {
     const fetchSatisfaction = async () => {
-      setLoadingSatisfaction(true); // Set loading to true before the fetch
+       // Set loading to true before the fetch
       try {
         const response = await fetch(
-          "localhost:7000/passengers/satisfaction"
+          "http://10.0.0.136:7000/passengers/satisfaction"
         ); // Your FastAPI endpoint
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         setSatisfaction(data.satisfaction);
+        setLoadingSatisfaction(false);
       } catch (error) {
         console.error("Error fetching satisfaction:", error);
-        // Optionally set satisfaction to a default/error value
-        setSatisfaction(100); // Or some other default/error value
-      } finally {
-        setLoadingSatisfaction(false);
       }
     };
-
     fetchSatisfaction();
 
     // Set up interval to refetch satisfaction (e.g., every 30 seconds)
@@ -210,86 +164,6 @@ export default function Home() {
 
     return () => clearInterval(intervalId); // Clear interval on unmount
   }, []);
-
-  // useEffect(() => {
-  //   if (selectedResource) {
-  //     if (selectedResource.type === "station") {
-  //       const updatedStation = stations.find(
-  //         (s) => s.id === selectedResource.data.id
-  //       );
-  //       if (
-  //         updatedStation &&
-  //         !shallowEqual(updatedStation, selectedResource.data)
-  //       ) {
-  //         setSelectedResource({ type: "station", data: updatedStation });
-  //       }
-  //     } else if (selectedResource.type === "train") {
-  //       const updatedTrain = trains.find(
-  //         (t) => t.id === selectedResource.data.id
-  //       );
-  //       if (
-  //         updatedTrain &&
-  //         !shallowEqual(updatedTrain, selectedResource.data)
-  //       ) {
-  //         setSelectedResource({ type: "train", data: updatedTrain });
-  //       }
-  //     }
-  //   }
-  // }, [stations, trains, selectedResource]);
-
-  const handleAddStation = async (newStationData: {
-    name: string;
-    x: number;
-    y: number;
-  }) => {
-    try {
-      const response = await fetch("http://localhost:3001/api/stations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newStationData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to add station.");
-      }
-      setIsAddStationDialogOpen(false);
-    } catch (error) {
-      console.error("Error adding station:", error);
-      alert(`Error adding station: ${error}`);
-    }
-  };
-
-  const handleDeleteStation = async (stationId: string) => {
-    try {
-      const response = await fetch(
-        `http://localhost:3001/api/stations/${stationId}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete station.");
-      }
-    } catch (error) {
-      console.error("Error deleting station:", error);
-      alert(`Error deleting station: ${error}`);
-    }
-  };
-
-  // const handleStationClick = (station: Station) => {
-  //   setSelectedResource({ type: "station", data: station });
-  //   setIsDrawerOpen(true);
-  // };
-
-  // const handleTrainClick = (train: Train) => {
-  //   setSelectedResource({ type: "train", data: train });
-  //   setIsDrawerOpen(true);
-  // };
 
   return (
     <div className="relative h-screen w-screen">
@@ -305,8 +179,14 @@ export default function Home() {
         <Dashboard currentTime={currentTime} />
       </div>
       <div className="absolute top-24 right-4 z-10 flex flex-col space-y-4">
-        <PassengerPanel initialPassengers={initialPassengers} />
+        {/* <PassengerPanel initialPassengers={initialPassengers} /> */}
 
+        <ButtonWithSkeleton
+          isLoading={isLoading}
+          initialPassengers={initialPassengers}
+        >
+          Click Me
+        </ButtonWithSkeleton>
         <Dialog
           open={isAddStationDialogOpen}
           onOpenChange={setIsAddStationDialogOpen}
@@ -315,14 +195,14 @@ export default function Home() {
             <Button variant="outline">Add Station</Button>
           </DialogTrigger>
           <AddStationDialog
-            onAddStation={handleAddStation}
+            onAddStation={() => {}}
             onClose={() => setIsAddStationDialogOpen(false)}
           />
         </Dialog>
       </div>
       <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 ">
-      <h1 className="text-8xl font-bold text-white">Under Development</h1>
-    </div>
+        <h1 className="text-8xl font-bold text-white">Under Development</h1>
+      </div>
       <div className="absolute bottom-4 right-4 z-10">
         <Legend />
       </div>
@@ -330,19 +210,13 @@ export default function Home() {
       {/* Satisfaction Display */}
       <div className="absolute bottom-12 right-4 z-10 ">
         {loadingSatisfaction ? (
-          <p className="text-xl font-bold">Loading...</p>
+          <Skeleton className="h-12 w-20 rounded-md" />
         ) : (
           <div className="text-center">
-            {" "}
-            {/* Added a container for easier layout */}
             <p className="text-sm text-gray-600">
-              {" "}
-              {/* Smaller text, gray color */}
               Satisfaction
             </p>
             <p className="text-5xl font-bold">
-              {" "}
-              {/* Much larger text size */}
               <span className="">{satisfaction.toFixed(1)}%</span>
             </p>
           </div>
@@ -353,43 +227,8 @@ export default function Home() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         resource={null}
-        onDeleteStation={handleDeleteStation}
+        onDeleteStation={() => {}}
       />
-      <style jsx>{`
-        @keyframes pulse {
-          0% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.3);
-            opacity: 0.7;
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 }
-
-// Add this helper function (outside the component) for shallow comparison
-// function shallowEqual(object1: any, object2: any): boolean {
-//   if (!object1 || !object2) return false;
-//   const keys1 = Object.keys(object1);
-//   const keys2 = Object.keys(object2);
-
-//   if (keys1.length !== keys2.length) {
-//     return false;
-//   }
-
-//   for (let key of keys1) {
-//     if (object1[key] !== object2[key]) {
-//       return false;
-//     }
-//   }
-
-//   return true;
-// }

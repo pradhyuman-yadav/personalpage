@@ -86,8 +86,8 @@ body {
     --xy-node-shadow: 0px 3.54px 4.55px rgba(0, 0, 0, 0.05),
       0px 3.54px 4.55px rgba(0, 0, 0, 0.13),
       0px 0.51px 1.01px rgba(0, 0, 0, 0.2);
-    --xy-node-radius: calc(theme('borderRadius.xl'));
-    
+    --xy-node-radius: calc(theme("borderRadius.xl"));
+
     /* Dark mode overrides */
     &.dark {
       --xy-node-shadow: 0px 3.54px 4.55px rgba(255, 255, 255, 0.05),
@@ -101,16 +101,16 @@ body {
       box-shadow: var(--xy-node-shadow);
       border: var(--xy-node-border);
       border-radius: var(--xy-node-radius);
-      padding: theme('spacing.4');
+      padding: theme("spacing.4");
 
       &-circle {
         @apply rounded-full h-25 w-25 border-2;
-        font-family: theme('fontFamily.mono');
+        font-family: theme("fontFamily.mono");
       }
 
       &-textinput {
         @apply w-36 text-left p-2;
-        font-family: theme('fontFamily.mono');
+        font-family: theme("fontFamily.mono");
       }
 
       &.selected {
@@ -131,20 +131,22 @@ body {
         @apply fill-opacity-50;
       }
 
-      .resizer, .tools, .circle, .textinput {
+      .resizer,
+      .tools,
+      .circle,
+      .textinput {
         @apply fill-chart-1;
       }
     }
   }
 
   /* Dark mode overrides */
-  .react-flow.dark { 
-    --xy-node-boxshadow-default: 
-    0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.05), /* light shadow */
-    0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.13), /* medium shadow */
-    0px 0.51px 1.01px 0px rgba(255, 255, 255, 0.2);  /* smallest shadow */  
+  .react-flow.dark {
+    --xy-node-boxshadow-default: 0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.05),
+      /* light shadow */ 0px 3.54px 4.55px 0px rgba(255, 255, 255, 0.13),
+      /* medium shadow */ 0px 0.51px 1.01px 0px rgba(255, 255, 255, 0.2); /* smallest shadow */
     --xy-theme-color-focus: #535353;
-}
+  }
 
   .text-input-node {
     &__input {
@@ -169,28 +171,28 @@ body {
 
   .react-flow__node-annotation {
     @apply text-sm; /* Use Tailwind's text-sm for font-size */
-    @apply w-[200px];    /* Use Tailwind's width utilities */
+    @apply w-[200px]; /* Use Tailwind's width utilities */
     @apply absolute;
-    @apply font-mono;  /* Use Tailwind's font-mono for monospace */
-    @apply text-left;    /* Use Tailwind's text-left */
+    @apply font-mono; /* Use Tailwind's font-mono for monospace */
+    @apply text-left; /* Use Tailwind's text-left */
     @apply bg-transparent; /* Use Tailwind's bg-transparent */
-    @apply border-none;    /* Use Tailwind's border-none */
-    @apply shadow-none;   /* Use Tailwind's shadow-none */
+    @apply border-none; /* Use Tailwind's border-none */
+    @apply shadow-none; /* Use Tailwind's shadow-none */
     color: var(--annotation-text-color); /* Use CSS variable for color */
 
-      /* No direct equivalent for padding in this context.  Handle in component if needed */
+    /* No direct equivalent for padding in this context.  Handle in component if needed */
     & .annotation-content {
-        @apply flex;          /* Use Tailwind's flex */
-        @apply items-center; /* Use Tailwind to vertically center content */
+      @apply flex; /* Use Tailwind's flex */
+      @apply items-center; /* Use Tailwind to vertically center content */
     }
 
     & .annotation-level {
-        @apply mr-1;          /* Use Tailwind's mr-1 for margin-right */
+      @apply mr-1; /* Use Tailwind's mr-1 for margin-right */
     }
 
     & .annotation-arrow {
-        @apply absolute;
-        @apply text-2xl;    /* Use Tailwind's text-2xl for font-size */
+      @apply absolute;
+      @apply text-2xl; /* Use Tailwind's text-2xl for font-size */
     }
   }
 }
@@ -204,6 +206,14 @@ body {
     display: flex;
     justify-content: space-evenly;
   }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
 }
-
-
