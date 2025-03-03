@@ -66,6 +66,7 @@ function PassengerPanel({ initialPassengers }: Props) {
       try {
         const response = await fetch('/api/supabaseProxy/from/stations/select/id,name'); // Use the proxy!
 
+        console.log("response", response);
         if (!response.ok) {
             const errorData = await response.json();
             setError(errorData.message || 'Failed to fetch stations')

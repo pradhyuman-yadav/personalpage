@@ -7,20 +7,20 @@ interface CustomRequestInit extends RequestInit {
 }
 
 // Route handler functions (GET, POST, etc.)
-export async function GET(request: NextRequest, context: { params: { path: string[] } }) {
-  return handleRequest(request, context.params.path);
+export async function GET(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+  return handleRequest(request, (await context.params).path);
 }
-export async function POST(request: NextRequest, context: { params: { path: string[] } }) {
-    return handleRequest(request, context.params.path);
+export async function POST(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+    return handleRequest(request, (await context.params).path);
 }
-export async function PUT(request: NextRequest, context: { params: { path: string[] } }) {
-    return handleRequest(request, context.params.path);
+export async function PUT(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+    return handleRequest(request, (await context.params).path);
 }
-export async function DELETE(request: NextRequest, context: { params: { path: string[] } }) {
-    return handleRequest(request, context.params.path);
+export async function DELETE(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+    return handleRequest(request, (await context.params).path);
 }
-export async function PATCH(request: NextRequest, context: { params: { path: string[] } }) {
-    return handleRequest(request, context.params.path);
+export async function PATCH(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+    return handleRequest(request, (await context.params).path);
 }
 
 // Helper function to handle the request
