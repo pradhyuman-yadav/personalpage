@@ -82,6 +82,7 @@ function PassengerPanel({ initialPassengers }: Props) {
         setLoading(false); // Set loading to false in all cases
       }
     };
+    console.log("Here are the stations:", stations);
 
     fetchStations();
   }, []);
@@ -118,6 +119,8 @@ function PassengerPanel({ initialPassengers }: Props) {
         }
       )
       .subscribe();
+
+      console.log("Here are the passengers:", channel);  
 
     return () => {
       channel.unsubscribe();

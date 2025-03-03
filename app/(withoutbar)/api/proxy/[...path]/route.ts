@@ -27,13 +27,13 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ p
 async function handleRequest(request: NextRequest, path: string[]) { // Corrected parameter
   try {
     const pathString = path.join('/');
-    const apiUrl = `http://localhost:7000/${pathString}`;
+    const apiUrl = `http://10.0.0.136:7000/${pathString}`;
 
     const headers = new Headers();
     for (const [key, value] of request.headers.entries()) {
       headers.set(key, value);
     }
-    headers.set('host', 'localhost:7000');
+    headers.set('host', '10.0.0.136:7000');
 
     const apiResponse = await fetch(apiUrl, {
       method: request.method,
