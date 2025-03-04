@@ -1,29 +1,60 @@
+/* eslint-disable */
 // app/api/supabaseProxy/[...path]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabaseClient";
-// import { SupabaseClient } from "@supabase/supabase-js";
-// import { Database } from "@/types/supabase";
+import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@/types/supabase";
 
 // Helper functions to build the query, now with correct return types
-// function from(supabase: SupabaseClient<Database>, table: string) {
-//     return supabase.from(table);
-// }
+function from(supabase: SupabaseClient<Database>, table: string): any {
+  return supabase.from(table);
+}
 
-// async function select(queryBuilder: any, columns: string) {
-//     return await queryBuilder.select(columns); // Await here
-// }
+async function select(
+  queryBuilder: any,
+  columns: string
+): Promise<{ data: any; error: PostgrestError | null }> {
+  return await queryBuilder.select(columns); // Await here
+}
 
-// async function insert(queryBuilder: any, body: any) {
-//     return await queryBuilder.insert(body).select();
-// }
+// Add more helper functions as needed (insert, update, delete, etc.)
+async function insert(
+  queryBuilder: any,
+  body: any
+): Promise<{ data: any; error: PostgrestError | null }> {
+  return await queryBuilder.insert(body).select();
+}
 
-// async function update(queryBuilder: any, body: any, id:any) { //add the id.
-//     return await queryBuilder.update(body).eq('id', id).select();
-// }
+async function update(
+  queryBuilder: any,
+  body: any,
+  id: any
+): Promise<{ data: any; error: PostgrestError | null }> {
+  return await queryBuilder.update(body).eq("id", id).select();
+}
 
-// async function deleteData(queryBuilder: any, id:any){
-//     return await queryBuilder.delete().eq('id',id);
-// }
+async function deleteData(
+  queryBuilder: any,
+  id: any
+): Promise<{ data: any; error: PostgrestError | null }> {
+  return await queryBuilder.delete().eq("id", id);
+}
+
+async function order(
+  queryBuilder: any,
+  column: string,
+  ascending: boolean = true
+): Promise<{ data: any; error: PostgrestError | null }> {
+  return await queryBuilder.order(column, { ascending });
+}
+
+async function limit(
+  queryBuilder: any,
+  count: number
+): Promise<{ data: any; error: PostgrestError | null }> {
+  return await queryBuilder.limit(count);
+}
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> }
@@ -59,7 +90,6 @@ export async function PATCH(
   const awaitedContext = { params: await context.params };
   return handleRequest(request, awaitedContext);
 }
-
 async function handleRequest(
   request: NextRequest,
   context: { params: { path: string[] } }
@@ -89,7 +119,11 @@ async function handleRequest(
       );
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let queryBuilder: any = supabase.from(tableName);
+    let queryBuilder: any = from(supabase, tableName);
+    let result: { data: any; error: PostgrestError | null } = {
+      data: null,
+      error: null,
+    };
 
     for (let i = 1; i < parts.length; i++) {
       const part = parts[i];
@@ -98,23 +132,30 @@ async function handleRequest(
         const nextPart = parts[i + 1];
         switch (part) {
           case "select":
-            queryBuilder = queryBuilder.select(nextPart); // Call select
+            result = await select(queryBuilder, nextPart); // Await and store result
+            if (result.error) return handleError(result.error);
+            queryBuilder = result; // Update for chaining
             i++; // Skip the next part (columns)
             break;
           case "order":
             const orderColumn = nextPart;
             const orderDirection = parts[i + 2];
             const ascending = orderDirection === "asc";
-            queryBuilder = queryBuilder.order(orderColumn, { ascending });
+            result = await order(queryBuilder, orderColumn, ascending);
+            if (result.error) return handleError(result.error);
+            queryBuilder = result; // Update for chaining
+
             i += 2; // Skip *two* parts (column and direction)
             break;
           case "limit":
-            queryBuilder = queryBuilder.limit(parseInt(nextPart, 10));
+            result = await limit(queryBuilder, parseInt(nextPart, 10));
+            if (result.error) return handleError(result.error);
+            queryBuilder = result; // Update for chaining
+
             i++;
             break;
           // Add more cases for other methods (filter, etc.)
           default:
-            //No method found, invalid request.
             return NextResponse.json(
               { error: `Invalid method: ${part}` },
               { status: 400 }
@@ -122,32 +163,22 @@ async function handleRequest(
         }
       } else {
         // Final part (usually the query execution)
+        const reqBody = await request.json();
         switch (request.method) {
           case "GET":
-            queryBuilder = await queryBuilder; // Await the final query
+            result = await queryBuilder; // Await the final query
             break;
           case "POST":
-            const reqBody = await request.json();
-            queryBuilder = await queryBuilder.insert(reqBody).select(); // Use helper
+            result = await insert(queryBuilder, reqBody); // Use helper
             break;
           case "PUT":
-            const putBody = await request.json();
-            queryBuilder = await queryBuilder
-              .update(putBody)
-              .eq("id", putBody.id)
-              .select(); // Use helper
+            result = await update(queryBuilder, reqBody, reqBody.id); // Use helper and pass id.
             break;
           case "DELETE":
-            const deleteBody = await request.json();
-            queryBuilder = await queryBuilder.delete().eq("id", deleteBody.id); // Use helper
+            result = await deleteData(queryBuilder, reqBody.id); // Use helper
             break;
           case "PATCH":
-            const patchBody = await request.json();
-            queryBuilder = await queryBuilder
-              .update(patchBody)
-              .eq("id", patchBody.id)
-              .select(); // Use helper
-
+            result = await update(queryBuilder, reqBody, reqBody.id); // Use helper and pass id
             break;
           default:
             return NextResponse.json(
@@ -157,11 +188,12 @@ async function handleRequest(
         }
       }
     }
-    if (queryBuilder.error) {
-      return handleError(queryBuilder.error);
+
+    if (result.error) {
+      return handleError(result.error);
     }
 
-    return NextResponse.json(queryBuilder.data || [], { status: 200 });
+    return NextResponse.json(result.data || [], { status: 200 });
   } catch (error: unknown) {
     return handleError(error);
   }
@@ -175,7 +207,7 @@ function handleError(error: unknown) {
     errorMessage = error.message;
   }
   if (error && typeof error === "object" && "status" in error) {
-    statusCode = (error as { status: number }).status;
+    statusCode = (error as { status: number }).status; // Type assertion
   }
 
   return NextResponse.json({ message: errorMessage }, { status: statusCode });
