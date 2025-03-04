@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import ResourceDetailsDrawer from "@/components/trainUtil/ResourceDetailsDrawer";
 import PassengerPanel from "@/components/trainUtil/PassengerPanel";
-import { createBrowserClient } from "@supabase/ssr";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // ... (Your interfaces: Station, Train, SimulationUpdateData, SurgeEvent, Route) ...
@@ -120,33 +119,41 @@ export default function Home() {
   const [satisfaction, setSatisfaction] = useState<number>(100); // Initial satisfaction
   const [loadingSatisfaction, setLoadingSatisfaction] = useState(true); // Add a loading state
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   // Fetch initial passengers *ONCE*
   useEffect(() => {
     const fetchInitialPassengers = async () => {
-      const { data, error } = await supabase.from("passengers").select("*");
-      if (error) {
-        console.error("Error fetching initial passengers:", error);
-      } else {
+      try {
+        // Fetch initial passengers using the proxy route
+        const response = await fetch(
+          "/api/supabaseProxy/passengers/initial-passengers"
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || "Failed to fetch initial passengers"
+          );
+        }
+
+        const data = await response.json();
         setInitialPassengers(data || []);
-        setIsLoading(false);
+        setIsLoading(false); // Set loading to false after fetching
+      } catch (error) {
+        console.error("Error fetching initial passengers:", error);
+        // Handle the error, e.g., display an error message to the user
       }
     };
+
     fetchInitialPassengers();
-  }, [supabase]);
+  }, []);
 
   // Fetch satisfaction data
   useEffect(() => {
     const fetchSatisfaction = async () => {
-       // Set loading to true before the fetch
+      // Set loading to true before the fetch
       try {
-        const response = await fetch(
-          '/api/proxy/passengers/satisfaction'
-        ); // Your FastAPI endpoint
+        const response = await fetch("/api/proxy/passengers/satisfaction"); // Your FastAPI endpoint
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -213,9 +220,7 @@ export default function Home() {
           <Skeleton className="h-12 w-20 rounded-md" />
         ) : (
           <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Satisfaction
-            </p>
+            <p className="text-sm text-gray-600">Satisfaction</p>
             <p className="text-5xl font-bold">
               <span className="">{satisfaction.toFixed(1)}%</span>
             </p>

@@ -53,6 +53,18 @@ async function handleRequest(
 
     const parts = pathString.split("/");
 
+    if (pathString === "passengers/initial-passengers") {
+      const { data, error } = await supabase.from("passengers").select("*");
+      if (error) {
+        console.error("Supabase error:", error);
+        return NextResponse.json(
+          { error: "Failed to fetch initial passengers", details: error.message },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json(data || []); // Return the data directly
+    }
+
     // You MUST start with .from()
     if (parts.length > 0) {
         supabaseMethod = supabase.from(parts[0]); // Call .from() with the first part
@@ -120,3 +132,34 @@ async function handleRequest(
     );
   }
 }
+
+// async function handleInitialPassengers(request: NextRequest) {
+//   try {
+//       const supabase = createSupabaseAdmin(request);
+//       const { data, error } = await supabase.from('passengers').select('*');
+
+//       if (error) {
+//           console.error("Supabase error:", error);
+//           return NextResponse.json(
+//               { error: "Failed to fetch initial passengers", details: error.message },
+//               { status: 500 }
+//           );
+//       }
+
+//       return NextResponse.json(data); // Return the data directly
+
+//   } catch (error: any) {
+//       console.error("Error fetching initial passengers:", error);
+//        let errorMessage = "Internal Server Error";
+//       if(error instanceof Error){
+//           errorMessage = error.message;
+//       }
+//       return new NextResponse(
+//       JSON.stringify({ message: errorMessage }),
+//       {
+//           status: 500,
+//           headers: { "Content-Type": "application/json" },
+//       }
+//       );
+//   }
+// }
