@@ -19,6 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { supabaseClient } from '@/lib/supabaseClient';
 
 interface Passenger {
   id: string;
@@ -49,50 +50,42 @@ interface Props {
 }
 
 function PassengerPanel({ initialPassengers }: Props) {
-  const [passengers, setPassengers] = useState<Passenger[]>([]);
+  const [passengers, setPassengers] = useState<Passenger[]>(initialPassengers);
   const [stations, setStations] = useState<Station[]>([]); // Use Station interface
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true); // Add loading state
   const [error, setError] = useState<string | null>(null); // Add error state
 
-  useEffect(() => {
-    setPassengers(initialPassengers);
-  }, [initialPassengers]);
+  // useEffect(() => {
+  //   setPassengers(initialPassengers);
+  // }, [initialPassengers]);
 
   //get the stations
   useEffect(() => {
     const fetchStations = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          "/api/supabaseProxy/stations/select/id,name"
-        );
-        if (!response.ok) {
-          // Get *detailed* error information from the response
-          let errorText = await response.text(); // Get the response as text first
-          let errorData;
-          try {
-            errorData = JSON.parse(errorText); // Try to parse as JSON
-            errorText = errorData.error || errorData.message || errorText; // Prioritize specific error messages
-          } catch (parseError) {
-            console.error(
-              "Failed to parse error response as JSON:",
-              parseError
-            );
-            // If it's not JSON, we'll just use the raw text
-          }
-          setError(
-            `Failed to fetch stations: ${response.status} - ${errorText}`
-          );
-          throw new Error(
-            `HTTP error! status: ${response.status},  text: ${errorText}`
-          );
+        const { data, error: fetchError } = await supabaseClient
+          .from("stations")
+          .select("id, name");
+
+        if (fetchError) {
+          setError(`Failed to fetch stations: ${fetchError.message}`);
+          console.error("Error fetching stations:", fetchError);
+          return; // Important: Stop execution if there's an error
         }
-        const data = await response.json();
+
+        if (!data) {
+          setError("No station data returned.");
+          console.warn("No station data returned."); //Warn, don't error.
+          setStations([]); //Set stations as empty.
+          return;
+        }
+
         setStations(data);
       } catch (error: unknown) {
         console.error("Error fetching stations:", error);
-        setError(String(error) || "An unknown error occurred"); // Set a user-friendly error message
+        setError(String(error) || "An unknown error occurred");
       } finally {
         setLoading(false);
       }

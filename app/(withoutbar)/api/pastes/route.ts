@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabaseClient";
 
 export async function POST(req: NextRequest) {
-  const supabaseServer = await createSupabaseAdmin(req); // Import server client
+  const supabaseServer = await createSupabaseAdmin(); // Import server client
 
   try {
     const { content, title, slug, expiration, syntax_highlighting } =

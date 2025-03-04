@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import TextShareDisplay from "./TextShareDisplay";
 import { Metadata } from "next";
 import { createSupabaseAdmin } from "@/lib/supabaseClient";
-import { headers } from 'next/headers'; //for getting headers
-import { NextRequest } from "next/server";
+// import { headers } from 'next/headers'; //for getting headers
+// import { NextRequest } from "next/server";
 
 interface TextShare {
   id: number;
@@ -20,11 +20,11 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const params = await props.params;
   const { slug } = params;
 
-  const requestHeaders = new Headers(await headers())
-  const request = new NextRequest(new URL(`http://dummy.com`), { //dummy url
-      headers: requestHeaders
-  })
-  const supabase =  createSupabaseAdmin(request); // Create client
+  // const requestHeaders = new Headers(await headers())
+  // const request = new NextRequest(new URL(`http://dummy.com`), { //dummy url
+  //     headers: requestHeaders
+  // })
+  const supabase =  createSupabaseAdmin(); // Create client
   const { data, error } = await supabase
       .from("pastes")
       .select("title")
@@ -46,11 +46,11 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 export default async function TextSharePage(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
   const { slug } = params;
-  const requestHeaders = new Headers(await headers())
-  const request = new NextRequest(new URL(`http://dummy.com`), { //dummy url
-      headers: requestHeaders
-  })
-  const supabase =  createSupabaseAdmin(request); // Create client at top level
+  // const requestHeaders = new Headers(await headers())
+  // const request = new NextRequest(new URL(`http://dummy.com`), { //dummy url
+  //     headers: requestHeaders
+  // })
+  const supabase =  createSupabaseAdmin(); // Create client at top level
   const { data, error } = await supabase
       .from("pastes")
       .select("*")

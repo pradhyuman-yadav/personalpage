@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabaseClient";
 
 export async function GET(request: NextRequest) {
-  const supabase = createSupabaseAdmin(request);
+  const supabase = createSupabaseAdmin();
 
   // Create a TransformStream.  We'll pipe the updates through this.
   const stream = new TransformStream();
