@@ -35,6 +35,7 @@ body {
     --radius: 0.5rem;
     --padding: 0.5rem;
     --annotation-text-color: #683bfa;
+    --font-shadows2: ${inter.style.fontFamily}, sans-serif;
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -75,6 +76,7 @@ body {
 }
 
 @layer components {
+
   .react-flow {
     @apply bg-background;
 

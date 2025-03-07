@@ -11,11 +11,18 @@ import {
 import NavMenu from "@/components/NavMenu";
 import Link from "next/link";
 import CpuLoadChart from "@/components/LoadChart";
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import { Shadows_Into_Light_Two } from "@next/font/google";
 
 const inconsolata = Inconsolata({
   subsets: ["latin"],
   variable: "--font-inconsolata",
+});
+
+const Shadows2 = Shadows_Into_Light_Two({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-shadows2",
 });
 
 export const metadata: Metadata = {
@@ -45,12 +52,14 @@ const info = (
 const header = (
   <header>
     <div className="text-right p-8 my-6 rounded-md ">
-      <div className="hidden sm:block"><Link href="/">
-        <h1 className="scroll-m-20 sm:text-4xl md:text-6xl lg:text-9xl font-bold mt-4">
-          Pradhyuman
-        </h1>
-      </Link></div>
-      
+      <div className="hidden sm:block">
+        <Link href="/">
+          <h1 className="scroll-m-20 sm:text-4xl md:text-6xl lg:text-9xl font-bold mt-4">
+            Pradhyuman
+          </h1>
+        </Link>
+      </div>
+
       <div className="justify-items-end py-5">
         <NavMenu />
       </div>
@@ -61,7 +70,7 @@ const header = (
 const footer = (
   <footer>
     <div className="border-t border-slate-400 mt-12 py-6 text-center text-slate-400">
-    <h3 className="justify-self-end">- by Pradhyuman</h3>
+      <h3 className="justify-self-end">- by Pradhyuman</h3>
     </div>
   </footer>
 );
@@ -72,7 +81,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inconsolata.variable}>
+    <html lang="en" className={`${inconsolata.className} ${Shadows2.className}`}>
       <head />
       <body>
         <ThemeProvider
@@ -84,7 +93,10 @@ export default function RootLayout({
           <div className="top-2 right-2 absolute">{info}</div>
           <div className="mx-auto  max-w-7xl px-6">
             {header}
-            <main>{children}<Toaster /></main>
+            <main>
+              {children}
+              <Toaster />
+            </main>
             {footer}
           </div>
         </ThemeProvider>
