@@ -17,7 +17,7 @@ function Home() {
 
   return (
     <>
-      <ArrowComponent className="absolute top-6 right-2 translate-x-6 -z-10" />
+      <ArrowComponent className="" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {postPreviews}
       </div>

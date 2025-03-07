@@ -58,7 +58,7 @@ const ArrowComponent: React.FC<ArrowComponentProps> = ({ className = "" }) => {
         width={100} // Use props or CSS for sizing
         height={150}
         viewBox={viewBox}
-        className=" fill-blue-500 dark:fill-blue-300 -rotate-[60deg]"
+        className=" fill-blue-500 dark:fill-blue-300 -rotate-[60deg] absolute top-6 right-2 translate-x-6 -z-10"
       >
         {svgD
           .split("M")
@@ -67,7 +67,7 @@ const ArrowComponent: React.FC<ArrowComponentProps> = ({ className = "" }) => {
             <path key={index} d={`M${pathData}`} />
           ))}
       </svg>
-      <p className={`text-center mt-2 font-shadows2`}>Try hovering your mouse over here!</p>
+      <p className="text-center mt-2 font-shadows2 absolute top-[250px] right-0 -rotate-[90deg] translate-x-16">Try hovering your mouse over here!</p>
     </div>
   );
 };

@@ -54,6 +54,7 @@ export default {
       },
       fontFamily: {
         inconsolata: ["var(--font-inconsolata)", "monospace"],
+        shadows2: ['var(--font-shadows2)', 'cursive'],
       },
       borderRadius: {
         lg: "var(--radius)",

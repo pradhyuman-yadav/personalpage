@@ -23,6 +23,7 @@ const Shadows2 = Shadows_Into_Light_Two({
   subsets: ["latin"],
   weight: "400",
   variable: "--font-shadows2",
+  display: 'swap',
 });
 
 export const metadata: Metadata = {

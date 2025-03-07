@@ -27,6 +27,8 @@ body {
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 240 10% 3.9%;
+    --font-inconsolata: 'Inconsolata', monospace; /* Fallback font */
+    --font-shadows2: 'Shadows Into Light Two', cursive; /* Fallback font */
     /* --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -35,7 +37,6 @@ body {
     --radius: 0.5rem;
     --padding: 0.5rem;
     --annotation-text-color: #683bfa;
-    --font-shadows2: ${inter.style.fontFamily}, sans-serif;
   }
   .dark {
     --background: 240 10% 3.9%;
