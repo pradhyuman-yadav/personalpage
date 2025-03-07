@@ -12,7 +12,7 @@ import NavMenu from "@/components/NavMenu";
 import Link from "next/link";
 import CpuLoadChart from "@/components/LoadChart";
 import { Toaster } from "@/components/ui/toaster";
-import { Shadows_Into_Light_Two } from "@next/font/google";
+import { Shadows_Into_Light_Two } from "next/font/google";
 
 const inconsolata = Inconsolata({
   subsets: ["latin"],
