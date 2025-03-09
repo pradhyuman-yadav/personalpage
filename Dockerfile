@@ -28,23 +28,5 @@ COPY . .
 # Build the application for production
 RUN npm run build
 
-# # Expose the application on port 3000
-# EXPOSE 3000
-
-# # Start the Next.js application
-# CMD ["npm", "start"]
-
-# --- Production Stage ---
-# FROM node:18-slim
-# WORKDIR /app
-
-# ENV NODE_ENV=production
-
-# COPY --from=builder /app/package*.json ./
-# COPY --from=builder /app/.next ./.next
-# COPY --from=builder /app/public ./public
-
-# RUN npm ci --omit=dev --omit=optional
-
 EXPOSE 3000
 CMD ["npm", "start"]

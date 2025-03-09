@@ -1,6 +1,6 @@
 // lib/email.ts (No changes)
-// const ALLOWED_DOMAINS = ['thepk.com']; // Replace with your domains
-const ALLOWED_DOMAINS = ['localhost:3000']; // Replace with your domains
+const ALLOWED_DOMAINS = ['thepk.in']; // Replace with your domains
+// const ALLOWED_DOMAINS = ['localhost:3000']; // Replace with your domains
 
 export function generateRandomString(length: number): string {
     const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
