@@ -1,95 +1,34 @@
-/* eslint-disable */
 // app/api/supabaseProxy/[...path]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabaseClient";
-import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "@/types/supabase";
 
-// Helper functions to build the query, now with correct return types
-function from(supabase: SupabaseClient<Database>, table: string): any {
-  return supabase.from(table);
-}
-
-async function select(
-  queryBuilder: any,
-  columns: string
-): Promise<{ data: any; error: PostgrestError | null }> {
-  return await queryBuilder.select(columns); // Await here
+// Route Handlers (using async/await for clarity)
+export async function GET(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+    const awaitedContext = { params: await context.params };
+    return handleRequest(request, awaitedContext);
 }
 
-// Add more helper functions as needed (insert, update, delete, etc.)
-async function insert(
-  queryBuilder: any,
-  body: any
-): Promise<{ data: any; error: PostgrestError | null }> {
-  return await queryBuilder.insert(body).select();
+export async function POST(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+    const awaitedContext = { params: await context.params };
+    return handleRequest(request, awaitedContext);
 }
 
-async function update(
-  queryBuilder: any,
-  body: any,
-  id: any
-): Promise<{ data: any; error: PostgrestError | null }> {
-  return await queryBuilder.update(body).eq("id", id).select();
+export async function PUT(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+    const awaitedContext = { params: await context.params };
+    return handleRequest(request, awaitedContext);
 }
 
-async function deleteData(
-  queryBuilder: any,
-  id: any
-): Promise<{ data: any; error: PostgrestError | null }> {
-  return await queryBuilder.delete().eq("id", id);
+export async function DELETE(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+     const awaitedContext = { params: await context.params };
+    return handleRequest(request, awaitedContext);
 }
 
-async function order(
-  queryBuilder: any,
-  column: string,
-  ascending: boolean = true
-): Promise<{ data: any; error: PostgrestError | null }> {
-  return await queryBuilder.order(column, { ascending });
+export async function PATCH(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+    const awaitedContext = { params: await context.params };
+    return handleRequest(request, awaitedContext);
 }
 
-async function limit(
-  queryBuilder: any,
-  count: number
-): Promise<{ data: any; error: PostgrestError | null }> {
-  return await queryBuilder.limit(count);
-}
-
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
-  const awaitedContext = { params: await context.params };
-  return handleRequest(request, awaitedContext);
-}
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
-  const awaitedContext = { params: await context.params };
-  return handleRequest(request, awaitedContext);
-}
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
-  const awaitedContext = { params: await context.params };
-  return handleRequest(request, awaitedContext);
-}
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
-  const awaitedContext = { params: await context.params };
-  return handleRequest(request, awaitedContext);
-}
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
-  const awaitedContext = { params: await context.params };
-  return handleRequest(request, awaitedContext);
-}
+// Main Request Handler
 async function handleRequest(
   request: NextRequest,
   context: { params: { path: string[] } }
@@ -100,115 +39,152 @@ async function handleRequest(
   try {
     const supabase = createSupabaseAdmin();
 
-    // Handle specific endpoints
-    if (pathString === "passengers/initial-passengers") {
+    // --- Handle Specific Endpoints (BEFORE generic logic) ---
+    if (pathString === "passengers/initial-passengers" && request.method === "GET") {
       const { data, error } = await supabase.from("passengers").select("*");
       if (error) {
         return handleError(error);
       }
-      return NextResponse.json(data || []);
+      return NextResponse.json(data || []); // Return empty array if null
     }
 
+    // --- Generic Proxy Logic (for all other requests) ---
     const parts = pathString.split("/");
     const tableName = parts[0];
 
     if (!tableName) {
-      return NextResponse.json(
-        { error: "No table specified" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No table specified" }, { status: 400 });
     }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let queryBuilder: any = from(supabase, tableName);
-    let result: { data: any; error: PostgrestError | null } = {
-      data: null,
-      error: null,
-    };
+    let queryBuilder: any = supabase.from(tableName);
 
     for (let i = 1; i < parts.length; i++) {
       const part = parts[i];
-
       if (i < parts.length - 1) {
         const nextPart = parts[i + 1];
         switch (part) {
           case "select":
-            result = await select(queryBuilder, nextPart); // Await and store result
-            if (result.error) return handleError(result.error);
-            queryBuilder = result; // Update for chaining
-            i++; // Skip the next part (columns)
+            queryBuilder = queryBuilder.select(nextPart);
+            i++;
             break;
           case "order":
             const orderColumn = nextPart;
-            const orderDirection = parts[i + 2];
+            const orderDirection = parts[i + 2] || "asc";
             const ascending = orderDirection === "asc";
-            result = await order(queryBuilder, orderColumn, ascending);
-            if (result.error) return handleError(result.error);
-            queryBuilder = result; // Update for chaining
-
-            i += 2; // Skip *two* parts (column and direction)
+            queryBuilder = queryBuilder.order(orderColumn, { ascending });
+            i += 2;
             break;
           case "limit":
-            result = await limit(queryBuilder, parseInt(nextPart, 10));
-            if (result.error) return handleError(result.error);
-            queryBuilder = result; // Update for chaining
-
+            queryBuilder = queryBuilder.limit(parseInt(nextPart, 10));
             i++;
             break;
-          // Add more cases for other methods (filter, etc.)
+          case "where":
+            const whereColumn = nextPart;
+            const operator = parts[i + 2];
+            let whereValue: string | number | boolean | string[] = parts[i + 3];
+             if (operator === 'eq' || operator === 'neq' || operator === 'gt' || operator === 'lt' || operator === 'gte' || operator === 'lte') {
+                if (!isNaN(Number(whereValue))) {
+                    whereValue = Number(whereValue);
+                } else if (whereValue.toLowerCase() === 'true' || whereValue.toLowerCase() === 'false') {
+                    whereValue = whereValue.toLowerCase() === 'true';
+                }
+            } else if (operator === 'in') {
+                whereValue = whereValue.split(',');
+            }
+            queryBuilder = queryBuilder.filter(whereColumn, operator, whereValue);
+            i += 3;
+            break;
           default:
-            return NextResponse.json(
-              { error: `Invalid method: ${part}` },
-              { status: 400 }
-            );
+           //return NextResponse.json({ error: `Invalid method: ${part}` }, { status: 400 });
+           //Don't return and just skip.
         }
       } else {
-        // Final part (usually the query execution)
-        const reqBody = await request.json();
+           let reqBody = null;
+          try{
+            if(request.body && request.headers.get("content-type") === "application/json"){
+              reqBody = await request.json()
+            }
+          }catch(error: unknown){
+             return NextResponse.json({ error: String(error) }, { status: 400 } );
+          }
         switch (request.method) {
           case "GET":
-            result = await queryBuilder; // Await the final query
+            // queryBuilder is already set up
             break;
           case "POST":
-            result = await insert(queryBuilder, reqBody); // Use helper
+            queryBuilder = queryBuilder.insert(reqBody).select();
             break;
           case "PUT":
-            result = await update(queryBuilder, reqBody, reqBody.id); // Use helper and pass id.
+          case "PATCH":
+             if (!reqBody || !reqBody.id) {
+              return NextResponse.json({ error: "Missing ID for update" }, { status: 400 });
+            }
+            queryBuilder = queryBuilder.update(reqBody).eq("id", reqBody.id).select();
             break;
           case "DELETE":
-            result = await deleteData(queryBuilder, reqBody.id); // Use helper
-            break;
-          case "PATCH":
-            result = await update(queryBuilder, reqBody, reqBody.id); // Use helper and pass id
+            if (!reqBody || !reqBody.id) {
+              return NextResponse.json({ error: "Missing ID for delete" }, { status: 400 });
+            }
+            queryBuilder = queryBuilder.delete().eq("id", reqBody.id).select();
             break;
           default:
-            return NextResponse.json(
-              { error: "Unsupported method" },
-              { status: 405 }
-            );
+            return NextResponse.json({ error: "Unsupported method" }, { status: 405 });
         }
       }
     }
 
-    if (result.error) {
-      return handleError(result.error);
+    const { data, error } = await queryBuilder;
+
+    if (error) {
+      return handleError(error);
     }
 
-    return NextResponse.json(result.data || [], { status: 200 });
+    // Correctly handle 204 and empty arrays
+    if (request.method === "DELETE") {
+        return new NextResponse(null, { status: 204 });
+    } else if (data === null || (Array.isArray(data) && data.length === 0)) {
+        return NextResponse.json([], { status: 200 });
+    }
+
+    // Serialize dates
+   let serializedData: string;
+    try {
+        serializedData = JSON.stringify(data, (key, value) => {
+          if (typeof value === 'string') {
+                const date = new Date(value);
+                if (!isNaN(date.getTime())) {
+                    return date.toISOString(); // Convert to ISO string
+                }
+            }
+            return value;
+        });
+    } catch (serializeError) {
+         console.error("Serialization error:", serializeError);
+        return NextResponse.json({ message: "Serialization Error" }, { status: 500 });
+    }
+
+    if(serializedData){
+        return NextResponse.json(JSON.parse(serializedData), { status: 200 });
+    }
+    return new NextResponse(null, {status: 204});
+
   } catch (error: unknown) {
     return handleError(error);
   }
 }
 
+// Centralized Error Handling
 function handleError(error: unknown) {
   console.error("Error:", error);
   let errorMessage = "Internal Server Error";
   let statusCode = 500;
+
   if (error instanceof Error) {
     errorMessage = error.message;
   }
   if (error && typeof error === "object" && "status" in error) {
-    statusCode = (error as { status: number }).status; // Type assertion
+    statusCode = (error as { status: number }).status;
   }
-
   return NextResponse.json({ message: errorMessage }, { status: statusCode });
 }

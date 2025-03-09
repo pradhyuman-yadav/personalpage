@@ -147,8 +147,67 @@ export type Database = {
           current_passengers?: number | null;
         };
         Relationships: [];
+      },
+      emails: {
+        Row: {
+          address: string
+          created_at: string
+          expires_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
     },
+    messages: {
+      Row: {
+        body: string | null
+        email_id: string
+        id: string
+        received_at: string
+        sender: string | null
+        subject: string | null
+      }
+      Insert: {
+        body?: string | null
+        email_id: string
+        id?: string
+        received_at?: string
+        sender?: string | null
+        subject?: string | null
+      }
+      Update: {
+        body?: string | null
+        email_id?: string
+        id?: string
+        received_at?: string
+        sender?: string | null
+        subject?: string | null
+      }
+      Relationships: [
+        {
+          foreignKeyName: "messages_email_id_fkey"
+          columns: ["email_id"]
+          isOneToOne: false
+          referencedRelation: "emails"
+          referencedColumns: ["id"]
+        }
+      ]
+    }
     Enums: {
       luggage_size_enum: "small" | "medium" | "large";
       passenger_status: "waiting" | "boarding" | "in_transit" | "arrived" | "exited";

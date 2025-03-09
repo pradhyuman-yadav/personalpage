@@ -42,6 +42,12 @@ const tools: Tool[] = [
     description: 'Share text snippets with expiration options.',
     href: '/textshare',
   },
+  {
+    id: 'temp-email',
+    name: 'Email Generator',
+    description: 'Share text snippets with expiration options.',
+    href: '/temp-email',
+  },
 ];
 
 export default function ToolsPage() {

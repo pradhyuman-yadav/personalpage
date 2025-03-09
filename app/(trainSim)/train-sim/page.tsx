@@ -136,6 +136,7 @@ export default function Home() {
           );
         }
 
+        console.log(response)
         const data = await response.json();
         setInitialPassengers(data || []);
         setIsLoading(false); // Set loading to false after fetching
