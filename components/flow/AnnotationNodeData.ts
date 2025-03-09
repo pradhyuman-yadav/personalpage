@@ -1,9 +1,14 @@
 // AnnotationNodeData.ts
-import { CSSProperties } from "react";
 
 export type AnnotationNodeData = {
-  label: React.ReactNode;
-  level?: number;
-  arrow?: string;
-  arrowStyle?: CSSProperties;
+  label: string;
+  arrowStyle: {
+    right: number;
+    bottom: number;
+    transform: string;
+  };
+  position?: { x: number; y: number };
+  // level?: number;
+  // arrow?: string;
+  // arrowStyle?: CSSProperties;
 };

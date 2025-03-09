@@ -12,25 +12,21 @@ import {
   Edge,
   Connection,
   ReactFlowProvider,
-  NodeTypes,
-  NodeProps,
-  MarkerType, // Import MarkerType
+  MarkerType,
+  MiniMap,
 } from "@xyflow/react";
-
-import { AnnotationNode } from "@/components/flow/annotation-node";
-import { AnnotationNodeType } from "@/components/flow/AnnotationNodeTypes";
 import { ButtonEdge } from "@/components/flow/button-edge";
 import initialElements from "@/components/flow/initial-elements";
 
 import '@xyflow/react/dist/style.css';
 
-const nodeTypes: NodeTypes = {
-  annotation: AnnotationNode as React.FC<NodeProps<AnnotationNodeType>>,
-};
+
 
 const edgeTypes = {
   button: ButtonEdge,
 };
+
+// const nodeClassName = (node: any) => node.type;
 
 function Flow() {
   const [nodes, , onNodesChange] = useNodesState(initialElements.nodes);
@@ -67,13 +63,13 @@ function Flow() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
-      attributionPosition="top-right"
-      nodeTypes={nodeTypes}
+      attributionPosition="bottom-left"
+      nodeTypes={initialElements.nodeTypes}
       edgeTypes={edgeTypes}
       fitView
     >
       <Controls />
-      {/* <Background color="#E6E6E6" /> */}
+      <MiniMap />
       <Background color="#9CA3AF" gap={12} size={1}/>
     </ReactFlow>
   );

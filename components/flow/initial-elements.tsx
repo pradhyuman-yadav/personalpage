@@ -1,8 +1,240 @@
-import React from "react";
-import { MarkerType } from "@xyflow/react";
+import * as React from "react";
+import {
+  MarkerType,
+  Node,
+  Edge,
+  Position,
+  Handle,
+  NodeTypes,
+  NodeProps,
+} from "@xyflow/react";
+import { projectsData, Project, annotationData } from "@/components/flow/projectData";
+import TechIcon from "@/components/flow/TechIcon";
+import dagre from "@dagrejs/dagre";
+import { AnnotationNode } from "@/components/flow/annotation-node";
+import { AnnotationNodeType } from "@/components/flow/AnnotationNodeTypes";
+import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
-export const nodes = [
-  // ─── Timeline Header ──────────────────────────────────────────────
+const getLayoutedElements = (
+  nodes: Node[],
+  edges: Edge[],
+  nodesPerRow: number = 4
+) => {
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  dagreGraph.setGraph({ rankdir: "LR", ranksep: 50, nodesep: 50 }); // Add spacing
+
+  // Separate project nodes and other nodes (like the header)
+  const projectNodes = nodes.filter((node) => node.id.startsWith("project"));
+  const otherNodes = nodes.filter((node) => !node.id.startsWith("project"));
+
+  // Layout project nodes in rows
+  projectNodes.forEach((node) => {
+    dagreGraph.setNode(node.id, {
+      width: typeof node.data?.width === "number" ? node.data.width : 150, // Use dynamic width if available
+      height: typeof node.data?.height === "number" ? node.data.height : 50, // Use dynamic height
+    });
+  });
+
+  // Add other nodes to the graph (e.g., header)
+  otherNodes.forEach((node) => {
+    dagreGraph.setNode(node.id, {
+      width: typeof node.data?.width === "number" ? node.data.width : 150,
+      height: typeof node.data?.height === "number" ? node.data.height : 50,
+    });
+  });
+
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
+
+  dagre.layout(dagreGraph);
+
+  let oldNodeId: string | dagre.Label | null = null;
+
+  nodes.forEach((node, index) => {
+    if (node.id.startsWith("project")) {
+      const nodeWithPosition = dagreGraph.node(node.id);
+      const col =
+        200 * ((index-1) % nodesPerRow) +
+        (oldNodeId == null ? 0 : dagreGraph.node(oldNodeId).width)*((index-1) % nodesPerRow);
+      const row = Math.floor((index-1) / nodesPerRow) * 100 + 250;
+      // console.log(row);
+
+      // Set Handle positions for project nodes
+      if (node.id.startsWith("project")) {
+        node.targetPosition = Position.Left;
+        node.sourcePosition = Position.Right;
+      }
+
+      // Check if nodeWithPosition and its properties are defined
+      if (
+        nodeWithPosition &&
+        typeof nodeWithPosition.x === "number" &&
+        typeof nodeWithPosition.y === "number"
+      ) {
+        node.position = {
+          x: col,
+          y: row,
+        };
+      } else {
+        node.position = { x: 0, y: 0 };
+        console.error(
+          `Node ${node.id} has invalid position data from Dagre:`,
+          nodeWithPosition
+        );
+      }
+      oldNodeId = node.id;
+    }
+  });
+  return { nodes, edges };
+};
+
+const ProjectNode: React.FC<{ data: Project }> = ({ data }) => {
+  const {
+    title,
+    techStack,
+    description,
+    githubLink,
+    liveLink,
+    startDate,
+    endDate,
+  } = data;
+  return (
+    <HoverCard>
+      <div className="relative">
+        <Handle
+          type="target"
+          position={Position.Left}
+          className="w-2 h-2 !bg-blue-500 absolute -left-1 top-1/2 -translate-y-1/2"
+        />
+        <Handle
+          type="source"
+          position={Position.Right}
+          className="w-2 h-2 !bg-blue-500 absolute -right-1 top-1/2 -translate-y-1/2"
+        />
+
+        <HoverCardTrigger asChild>
+          <div className=" bg-sky-200 dark:bg-sky-100 border rounded-md p-2 cursor-pointer">
+            <div className="flex items-center">
+              <span className={"text-lg text-gray-950"}>{title}</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {techStack.map((tech) => (
+                <TechIcon key={tech} tech={tech} className="text-gray-950" />
+              ))}
+            </div>
+            <div className="flex items-center">
+              <strong className="text-xs text-gray-950">
+                {startDate && endDate
+                  ? `${startDate} - ${endDate}`
+                  : startDate
+                  ? `Started: ${startDate}`
+                  : endDate
+                  ? `Completed: ${endDate}`
+                  : "Ongoing"}
+              </strong>
+            </div>
+          </div>
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80 z-[9999]">
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">{title}</h4>
+            <div className="flex flex-wrap gap-1">
+              {techStack.map((tech) => (
+                <TechIcon
+                  key={tech}
+                  tech={tech}
+                  className="text-black dark:text-white"
+                />
+              ))}
+            </div>
+            <p className="text-sm">{description}</p>
+            <div className="flex gap-2 pt-2">
+              {githubLink && (
+                <Button asChild variant="outline" size="icon">
+                  <a
+                    href={githubLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    <TechIcon
+                      key={"Github"}
+                      tech={"Github"}
+                      className="h-4 w-4 text-black dark:text-white"
+                    />
+                  </a>
+                </Button>
+              )}
+              {liveLink && (
+                <Button asChild variant="outline" size="icon">
+                  <a
+                    href={liveLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    <TechIcon
+                      key={"Link"}
+                      tech={"Link"}
+                      className="h-4 w-4 text-black dark:text-white"
+                    />
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+        </HoverCardContent>
+      </div>
+    </HoverCard>
+  );
+};
+
+const projectNodes: Node[] = projectsData.map((project) => ({
+  id: project.id,
+  type: "custom",
+  position: { x: 0, y: 0 },
+  data: project as unknown as Record<string, unknown>, // Cast the project data
+  className: "project-node",
+}));
+
+const annotationNodes: Node[] = annotationData.map((project, index) => ({
+  id: `annotation-${index}`,
+  type: "annotation",
+  draggable: false,
+  selectable: false,
+  position: { x: project?.position?.x || 0, y: project?.position?.y || 0 },
+  data: {
+    // label: (
+    //     <div className="rounded-lg p-1 text-sm border">
+    //         <div className="flex items-center justify-center">
+    //             <span className="text-gray-950">{"H"}</span>
+    //         </div>
+    //     </div>
+    // ),
+    // arrowStyle: { display: "none" },
+  },
+}));
+
+const projectEdges: Edge[] = [];
+for (let i = 0; i < projectsData.length - 1; i++) {
+  projectEdges.push({
+    id: `edge-${projectsData[i].id}-${projectsData[i + 1].id}`,
+    source: projectsData[i].id,
+    target: projectsData[i + 1].id,
+    type: "smoothstep",
+    animated: true,
+    markerEnd: { type: MarkerType.ArrowClosed },
+  });
+}
+
+const initialNodes: Node[] = [
   {
     id: "timeline-header",
     type: "annotation",
@@ -10,287 +242,25 @@ export const nodes = [
     selectable: false,
     data: {
       label: (
-        <div className="text-3xl font-bold text-center whitespace-nowrap">
+        <div className={"text-9xl font-bold text-center whitespace-nowrap"}>
           Projects
         </div>
       ),
-      arrowStyle: { display: "none", },
+      arrowStyle: { display: "none" },
     },
-    position: { x: 720, y: 20 },
+    position: { x: 0, y: 0 },
   },
-
-  // ─── Project A ──────────────────────────────────────────────────────
-  {
-    id: "project-A",
-    type: "default",
-    data: {
-      label: <div>Portfolio Website</div>,
-      arrowStyle: { display: "none" } // Changed to JSX
-    },
-    position: { x: 100, y: 200 },
-    className: "p-2 text-black dark:text-black",
-  },
-  {
-    id: "annotation-A",
-    type: "annotation",
-    draggable: false,
-    selectable: false,
-    data: {
-      label: (
-        <div className="rounded-lg p-3 text-sm">
-          <div className="flex items-center justify-center space-x-2">
-            <span role="img" aria-label="Calendar">
-              📅
-            </span>
-            <strong>Jan 2025</strong>
-          </div>
-        </div>
-      ),
-      // Adjust the transform to anchor the annotation to the edge
-      arrowStyle: { display: "none",},
-    },
-    position: { x: 100, y: 120 },
-  },
-
-  // ─── Project B ──────────────────────────────────────────────────────
-  {
-    id: "project-B",
-    type: "default",
-    data: {
-      label: <div>JobMatch Automator</div>,
-      arrowStyle: { display: "none" } // Changed to JSX
-    },
-    position: { x: 300, y: 200 },
-    className: "p-2 text-black dark:text-black",
-  },
-  {
-    id: "annotation-B",
-    type: "annotation",
-    draggable: false,
-    selectable: false,
-    data: {
-      label: (
-        <div className="rounded-lg p-3 text-sm">
-          <div className="flex items-center justify-center space-x-2">
-            <span role="img" aria-label="Calendar">
-              📅
-            </span>
-            <strong>May 2024</strong>
-          </div>
-        </div>
-      ),
-      arrowStyle: { display: "none",},
-    },
-    position: { x: 300, y: 120 },
-  },
-
-  // ─── Project C ──────────────────────────────────────────────────────
-  {
-    id: "project-C",
-    type: "default",
-    data: { label: <div>Trading with ML</div>, arrowStyle: { display: "none" } }, // Removed quotes
-    position: { x: 500, y: 200 },
-    className: "p-2 text-black dark:text-black",
-  },
-  {
-    id: "annotation-C",
-    type: "annotation",
-    draggable: false,
-    selectable: false,
-    data: {
-      label: (
-        <div className="rounded-lg p-3 text-sm">
-          <div className="flex items-center justify-center space-x-2">
-            <span role="img" aria-label="Calendar">
-              📅
-            </span>
-            <strong>Dec 2024</strong>
-          </div>
-        </div>
-      ),
-      arrowStyle: { display: "none",},
-    },
-    position: { x: 500, y: 120 },
-  },
-
-  // ─── Project D ──────────────────────────────────────────────────────
-  {
-    id: "project-D",
-    type: "default",
-    data: { label: <div>Full Body Mo-Cap</div>, arrowStyle: { display: "none" } }, // Removed quotes
-    position: { x: 700, y: 200 },
-    className: "p-2 text-black dark:text-black",
-  },
-  {
-    id: "annotation-D",
-    type: "annotation",
-    draggable: false,
-    selectable: false,
-    data: {
-      label: (
-        <div className="rounded-lg p-3 text-sm">
-          <div className="flex items-center justify-center space-x-2">
-            <span role="img" aria-label="Calendar">
-              📅
-            </span>
-            <strong>Mar 2018</strong>
-          </div>
-        </div>
-      ),
-      arrowStyle: { display: "none",},
-    },
-    position: { x: 700, y: 120 },
-  },
-  // ─── Project E ──────────────────────────────────────────────────────
-  {
-    id: "project-E",
-    type: "default",
-    data: { label: <div>AI Roommate Assistant</div>, arrowStyle: { display: "none" } }, // Removed quotes
-    position: { x: 700, y: 300 },
-    className: "p-2 text-black dark:text-black",
-  },
-  {
-    id: "annotation-E",
-    type: "annotation",
-    draggable: false,
-    selectable: false,
-    data: {
-      label: (
-        <div className="rounded-lg p-3 text-sm">
-          <div className="flex items-center justify-center space-x-2">
-            <span role="img" aria-label="Calendar">
-              📅
-            </span>
-            <strong>Sep 2023</strong>
-          </div>
-        </div>
-      ),
-      arrowStyle: { display: "none",},
-    },
-    position: { x: 700, y: 370 },
-  },
-
-  // ─── Project F ──────────────────────────────────────────────────────
-  {
-    id: "project-F",
-    type: "default",
-    data: { label: <div>Wild Animal Detection</div>, arrowStyle: { display: "none" } }, // Removed quotes
-    position: { x: 500, y: 300 },
-    className: "p-2 text-black dark:text-black",
-  },
-  {
-    id: "annotation-F",
-    type: "annotation",
-    draggable: false,
-    selectable: false,
-    data: {
-      label: (
-        <div className="rounded-lg p-3 text-sm">
-          <div className="flex items-center justify-center space-x-2">
-            <span role="img" aria-label="Calendar">
-              📅
-            </span>
-            <strong>Oct 2024</strong>
-          </div>
-        </div>
-      ),
-      arrowStyle: { display: "none",},
-    },
-    position: { x: 500, y: 370 },
-  },
-
-  // ─── Project G ──────────────────────────────────────────────────────
-  {
-    id: "project-G",
-    type: "default",
-    data: { label: <div>AI Instagram Model</div>, arrowStyle: { display: "none" } }, // Removed quotes
-    position: { x: 300, y: 300 },
-    className: "p-2 text-black dark:text-black",
-  },
-  {
-    id: "annotation-G",
-    type: "annotation",
-    draggable: false,
-    selectable: false,
-    data: {
-      label: (
-        <div className="rounded-lg p-3 text-sm">
-          <div className="flex items-center justify-center space-x-2">
-            <span role="img" aria-label="Calendar">
-              📅
-            </span>
-            <strong>Jan 2025</strong>
-          </div>
-        </div>
-      ),
-      arrowStyle: {
-        right: 0,
-        bottom: 0,
-        transform: "translate(-30px,10px) rotate(-80deg)",
-      },
-    },
-    position: { x: 300, y: 370 },
-  },
+  ...projectNodes,
+  ...annotationNodes,
 ];
 
-export const edges = [
-  // ─── Connect Projects Sequentially ────────────────────────────────
-  {
-    id: "edge-A-B",
-    source: "project-A",
-    target: "project-B",
-    type: "smoothstep",
-    animated: true,
-    label: "edge",
-    markerEnd: { type: MarkerType.ArrowClosed },
-  },
-  {
-    id: "edge-B-C",
-    source: "project-B",
-    target: "project-C",
-    type: "smoothstep",
-    animated: true,
-    label: "edge",
-    markerEnd: { type: MarkerType.ArrowClosed },
-  },
-  {
-    id: "edge-C-D",
-    source: "project-C",
-    target: "project-D",
-    type: "smoothstep",
-    animated: true,
-    label: "edge",
-    markerEnd: { type: MarkerType.ArrowClosed },
-  },
-  {
-    id: "edge-D-E",
-    source: "project-D",
-    target: "project-E",
-    type: "smoothstep",
-    animated: true,
-    label: "edge",
-    markerEnd: { type: MarkerType.ArrowClosed },
-  },
-  {
-    id: "edge-E-F",
-    source: "project-E",
-    target: "project-F",
-    type: "smoothstep",
-    animated: true,
-    label: "edge",
-    markerEnd: { type: MarkerType.ArrowClosed },
-  },
-  {
-    id: "edge-F-G",
-    source: "project-F",
-    target: "project-G",
-    type: "smoothstep",
-    animated: true,
-    label: "edge",
-    markerEnd: { type: MarkerType.ArrowClosed },
-  },
-];
+const initialEdges: Edge[] = [...projectEdges];
 
-const initialElements = { nodes: nodes, edges: edges };
+const nodeTypes: NodeTypes = {
+  annotation: AnnotationNode as React.FC<NodeProps<AnnotationNodeType>>,
+  custom: ProjectNode,
+};
 
+const { nodes, edges } = getLayoutedElements(initialNodes, initialEdges);
+const initialElements = { nodes: nodes, edges: edges, nodeTypes };
 export default initialElements;
