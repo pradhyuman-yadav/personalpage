@@ -10,14 +10,14 @@ import PassengerPanel from "@/components/trainSimUtil/PassengerPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Interfaces (Station, Train, SurgeEvent, Route, Line, Passenger) - No changes here, keep them as before.
-interface Station {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  current_passengers: number;
-  is_surging?: boolean;
-}
+// interface Station {
+//   id: string;
+//   name: string;
+//   x: number;
+//   y: number;
+//   current_passengers: number;
+//   is_surging?: boolean;
+// }
 
 // interface Train {
 //   id: string;
@@ -103,7 +103,7 @@ export default function Home() {
   // const [stations, setStations] = useState<Station[]>([]);
   // const [surgeEvents] = useState<SurgeEvent[]>([]);
   const [isAddStationDialogOpen, setIsAddStationDialogOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   // const [routes, setRoutes] = useState<Route[]>([]);
   // const [lines, setLines] = useState<Line[]>([]);
   const [initialPassengers, setInitialPassengers] = useState<Passenger[]>([]);
