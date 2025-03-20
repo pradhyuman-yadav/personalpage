@@ -172,6 +172,29 @@ export type Database = {
         }
         Relationships: []
       }
+      law_chat_history: {
+        Row: {
+          id: string;
+          prompt_id: string;
+          history: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          prompt_id: string;
+          history: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          prompt_id?: string;
+          history?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     },
     messages: {
       Row: {
