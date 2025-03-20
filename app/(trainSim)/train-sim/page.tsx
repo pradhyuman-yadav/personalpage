@@ -1,17 +1,15 @@
+// app/page.tsx
 "use client";
 import { useEffect, useState } from "react";
-// import { io } from "socket.io-client";
-import MapDisplay from "@/components/trainUtil/MapDisplay";
-import AddStationDialog from "@/components/trainUtil/AddStationDialog";
-import Dashboard from "@/components/trainUtil/Dashboard";
-import Legend from "@/components/trainUtil/Legend";
+import MapDisplay from "@/components/trainSimUtil/MapDisplay";
+import AddStationDialog from "@/components/trainSimUtil/AddStationDialog";
+import Legend from "@/components/trainSimUtil/Legend";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import ResourceDetailsDrawer from "@/components/trainUtil/ResourceDetailsDrawer";
-import PassengerPanel from "@/components/trainUtil/PassengerPanel";
+import PassengerPanel from "@/components/trainSimUtil/PassengerPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// ... (Your interfaces: Station, Train, SimulationUpdateData, SurgeEvent, Route) ...
+// Interfaces (Station, Train, SurgeEvent, Route, Line, Passenger) - No changes here, keep them as before.
 interface Station {
   id: string;
   name: string;
@@ -35,59 +33,51 @@ interface Train {
   current_schedule_id: string | null;
 }
 
-// interface SimulationUpdateData {
-//   time: number;
-//   trains: Train[];
-//   stations: Station[];
-//   surgeEvents?: SurgeEvent[];
-// }
-
 interface SurgeEvent {
-  id: string;
-  target_station_ids: string[];
-  start_time: number;
-  duration: number;
-  passenger_multiplier: number;
+ id: string;
+ target_station_ids: string[];
+ start_time: number;
+ duration: number;
+ passenger_multiplier: number;
 }
 
 interface Route {
-  id: string;
-  line_id: string;
-  name: string;
-  direction: string;
-  station_order: string[]; // Array of station IDs
+ id: string;
+ line_id: string;
+ name: string;
+ direction: string;
+ station_order: string[]; // Array of station IDs
 }
 
 interface Line {
-  id: string;
-  name: string;
-  color: string;
+ id: string;
+ name: string;
+ color: string;
 }
 
 interface Passenger {
-  // <--- ADD THIS
-  id: string;
-  origin_station_id: string;
-  destination_station_id: string;
-  first_name: string;
-  last_name: string;
-  age: number;
-  ticket_type: string;
-  luggage_size: string;
-  email: string;
-  phone_number: string;
-  spawn_time: string;
-  status: string;
-  current_station_id: string | null;
-  train_id: string | null;
-  patience: number | null;
-  board_time: string | null;
-  arrival_time: string | null;
+ id: string;
+ origin_station_id: string;
+ destination_station_id: string;
+ first_name: string;
+ last_name: string;
+ age: number;
+ ticket_type: string;
+ luggage_size: string;
+ email: string;
+ phone_number: string;
+ spawn_time: string;
+ status: string;
+ current_station_id: string | null;
+ train_id: string | null;
+ patience: number | null;
+ board_time: string | null;
+ arrival_time: string | null;
 }
 
 interface ButtonWithSkeletonProps {
-  isLoading: boolean; // Explicitly type isLoading as boolean
-  initialPassengers: Passenger[]; // Add initialPassengers prop
+  isLoading: boolean;
+  initialPassengers: Passenger[];
   children: React.ReactNode;
 }
 
@@ -98,63 +88,95 @@ function ButtonWithSkeleton({
   return (
     <>
       {isLoading ? (
-        <Skeleton className="h-9 w-full" /> // Skeleton for loading state
+        <Skeleton className="h-9 w-full" />
       ) : (
-        <PassengerPanel initialPassengers={initialPassengers} /> // Render the actual button content
+        <PassengerPanel initialPassengers={initialPassengers} />
       )}
     </>
   );
 }
 
+
 export default function Home() {
-  const [currentTime] = useState(0);
-  const [trains] = useState<Train[]>([]);
-  const [stations] = useState<Station[]>([]);
+  // const [currentTime] = useState(0);
+  const [trains, setTrains] = useState<Train[]>([]);
+  const [stations, setStations] = useState<Station[]>([]);
   const [surgeEvents] = useState<SurgeEvent[]>([]);
   const [isAddStationDialogOpen, setIsAddStationDialogOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [routes] = useState<Route[]>([]);
-  const [lines] = useState<Line[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [lines, setLines] = useState<Line[]>([]);
   const [initialPassengers, setInitialPassengers] = useState<Passenger[]>([]);
-  const [satisfaction, setSatisfaction] = useState<number>(100); // Initial satisfaction
-  const [loadingSatisfaction, setLoadingSatisfaction] = useState(true); // Add a loading state
+  const [satisfaction, setSatisfaction] = useState<number>(100);
+  const [loadingSatisfaction, setLoadingSatisfaction] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedResource, setSelectedResource] = useState<Station | null>(null); //  Store the selected station
 
-  // Fetch initial passengers *ONCE*
+  setSelectedResource(selectedResource || null);
+  setIsDrawerOpen(isDrawerOpen || false);
+  
+
+  // Fetch initial data (stations, routes, lines, trains)
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Fetch Stations
+                const stationsResponse = await fetch("/api/supabaseProxy/stations");
+                if (!stationsResponse.ok) throw new Error("Failed to fetch stations");
+                const stationsData = await stationsResponse.json();
+                setStations(stationsData);
+
+                // Fetch Routes
+                const routesResponse = await fetch("/api/supabaseProxy/routes");
+                if (!routesResponse.ok) throw new Error("Failed to fetch routes");
+                const routesData = await routesResponse.json();
+                setRoutes(routesData);
+
+                // Fetch Lines
+                const linesResponse = await fetch("/api/supabaseProxy/lines");
+                if (!linesResponse.ok) throw new Error("Failed to fetch lines");
+                const linesData = await linesResponse.json();
+                setLines(linesData);
+
+                //Fetch trains
+                const trainsResponse = await fetch("/api/supabaseProxy/trains");
+                if(!trainsResponse.ok) throw new Error("Failed to fetch trains.");
+                const trainsData = await trainsResponse.json();
+                setTrains(trainsData);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+
+  // Fetch initial passengers
   useEffect(() => {
     const fetchInitialPassengers = async () => {
       try {
-        // Fetch initial passengers using the proxy route
-        const response = await fetch(
-          "/api/supabaseProxy/passengers/initial-passengers"
-        );
-
+        const response = await fetch("/api/supabaseProxy/passengers/initial-passengers");
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(
-            errorData.error || "Failed to fetch initial passengers"
-          );
+          throw new Error(errorData.error || "Failed to fetch initial passengers");
         }
-
-        console.log(response)
         const data = await response.json();
         setInitialPassengers(data || []);
-        setIsLoading(false); // Set loading to false after fetching
+        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching initial passengers:", error);
-        // Handle the error, e.g., display an error message to the user
       }
     };
-
     fetchInitialPassengers();
   }, []);
 
   // Fetch satisfaction data
   useEffect(() => {
     const fetchSatisfaction = async () => {
-      // Set loading to true before the fetch
       try {
-        const response = await fetch("/api/proxy/passengers/satisfaction"); // Your FastAPI endpoint
+        const response = await fetch("/api/proxy/passengers/satisfaction");
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -166,12 +188,19 @@ export default function Home() {
       }
     };
     fetchSatisfaction();
-
-    // Set up interval to refetch satisfaction (e.g., every 30 seconds)
     const intervalId = setInterval(fetchSatisfaction, 30000);
-
-    return () => clearInterval(intervalId); // Clear interval on unmount
+    return () => clearInterval(intervalId);
   }, []);
+
+
+
+  // --- Click Handlers ---
+  const handleStationClick = (station: Station) => {
+    setSelectedResource(station); // Set the selected station
+    setIsDrawerOpen(true); // Open the drawer
+  };
+
+
 
   return (
     <div className="relative h-screen w-screen">
@@ -181,60 +210,37 @@ export default function Home() {
         surgeEvents={surgeEvents}
         routes={routes}
         lines={lines}
+        onStationClick={handleStationClick}
       />
-
-      <div className="absolute top-4 left-4 z-10">
-        <Dashboard currentTime={currentTime} />
-      </div>
       <div className="absolute top-24 right-4 z-10 flex flex-col space-y-4">
-        {/* <PassengerPanel initialPassengers={initialPassengers} /> */}
-
-        <ButtonWithSkeleton
-          isLoading={isLoading}
-          initialPassengers={initialPassengers}
-        >
-          Click Me
+        <ButtonWithSkeleton isLoading={isLoading} initialPassengers={initialPassengers}>
+            Passenger Panel
         </ButtonWithSkeleton>
-        <Dialog
-          open={isAddStationDialogOpen}
-          onOpenChange={setIsAddStationDialogOpen}
-        >
+
+        <Dialog open={isAddStationDialogOpen} onOpenChange={setIsAddStationDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">Add Station</Button>
           </DialogTrigger>
-          <AddStationDialog
-            onAddStation={() => {}}
-            onClose={() => setIsAddStationDialogOpen(false)}
-          />
+          <AddStationDialog onAddStation={() => {}} onClose={() => setIsAddStationDialogOpen(false)} />
         </Dialog>
       </div>
-      <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 ">
-        <h1 className="text-8xl font-bold text-white">Under Development</h1>
-      </div>
+
       <div className="absolute bottom-4 right-4 z-10">
         <Legend />
       </div>
 
-      {/* Satisfaction Display */}
-      <div className="absolute bottom-12 right-4 z-10 ">
+      <div className="absolute bottom-12 right-4 z-10">
         {loadingSatisfaction ? (
           <Skeleton className="h-12 w-20 rounded-md" />
         ) : (
           <div className="text-center">
             <p className="text-sm text-gray-600">Satisfaction</p>
             <p className="text-5xl font-bold">
-              <span className="">{satisfaction.toFixed(1)}%</span>
+              <span>{satisfaction.toFixed(1)}%</span>
             </p>
           </div>
         )}
       </div>
-
-      <ResourceDetailsDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        resource={null}
-        onDeleteStation={() => {}}
-      />
     </div>
   );
 }
