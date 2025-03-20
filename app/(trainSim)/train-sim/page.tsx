@@ -1,7 +1,7 @@
 // app/page.tsx
 "use client";
 import { useEffect, useState } from "react";
-import MapDisplay from "@/components/trainSimUtil/MapDisplay";
+// import MapDisplay from "@/components/trainSimUtil/MapDisplay";
 import AddStationDialog from "@/components/trainSimUtil/AddStationDialog";
 import Legend from "@/components/trainSimUtil/Legend";
 import { Button } from "@/components/ui/button";
@@ -19,41 +19,41 @@ interface Station {
   is_surging?: boolean;
 }
 
-interface Train {
-  id: string;
-  position_x: number;
-  position_y: number;
-  status: string;
-  line_id: string;
-  current_station_id: string | null;
-  next_station_id: string | null;
-  current_passengers: number;
-  current_speed: number;
-  current_route_id: string | null;
-  current_schedule_id: string | null;
-}
+// interface Train {
+//   id: string;
+//   position_x: number;
+//   position_y: number;
+//   status: string;
+//   line_id: string;
+//   current_station_id: string | null;
+//   next_station_id: string | null;
+//   current_passengers: number;
+//   current_speed: number;
+//   current_route_id: string | null;
+//   current_schedule_id: string | null;
+// }
 
-interface SurgeEvent {
- id: string;
- target_station_ids: string[];
- start_time: number;
- duration: number;
- passenger_multiplier: number;
-}
+// interface SurgeEvent {
+//  id: string;
+//  target_station_ids: string[];
+//  start_time: number;
+//  duration: number;
+//  passenger_multiplier: number;
+// }
 
-interface Route {
- id: string;
- line_id: string;
- name: string;
- direction: string;
- station_order: string[]; // Array of station IDs
-}
+// interface Route {
+//  id: string;
+//  line_id: string;
+//  name: string;
+//  direction: string;
+//  station_order: string[]; // Array of station IDs
+// }
 
-interface Line {
- id: string;
- name: string;
- color: string;
-}
+// interface Line {
+//  id: string;
+//  name: string;
+//  color: string;
+// }
 
 interface Passenger {
  id: string;
@@ -99,13 +99,13 @@ function ButtonWithSkeleton({
 
 export default function Home() {
   // const [currentTime] = useState(0);
-  const [trains, setTrains] = useState<Train[]>([]);
-  const [stations, setStations] = useState<Station[]>([]);
-  const [surgeEvents] = useState<SurgeEvent[]>([]);
+  // const [trains, setTrains] = useState<Train[]>([]);
+  // const [stations, setStations] = useState<Station[]>([]);
+  // const [surgeEvents] = useState<SurgeEvent[]>([]);
   const [isAddStationDialogOpen, setIsAddStationDialogOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [lines, setLines] = useState<Line[]>([]);
+  // const [routes, setRoutes] = useState<Route[]>([]);
+  // const [lines, setLines] = useState<Line[]>([]);
   const [initialPassengers, setInitialPassengers] = useState<Passenger[]>([]);
   const [satisfaction, setSatisfaction] = useState<number>(100);
   const [loadingSatisfaction, setLoadingSatisfaction] = useState(true);
@@ -123,26 +123,26 @@ export default function Home() {
                 // Fetch Stations
                 const stationsResponse = await fetch("/api/supabaseProxy/stations");
                 if (!stationsResponse.ok) throw new Error("Failed to fetch stations");
-                const stationsData = await stationsResponse.json();
-                setStations(stationsData);
+                // const stationsData = await stationsResponse.json();
+                // setStations(stationsData);
 
                 // Fetch Routes
                 const routesResponse = await fetch("/api/supabaseProxy/routes");
                 if (!routesResponse.ok) throw new Error("Failed to fetch routes");
-                const routesData = await routesResponse.json();
-                setRoutes(routesData);
+                // const routesData = await routesResponse.json();
+                // setRoutes(routesData);
 
                 // Fetch Lines
                 const linesResponse = await fetch("/api/supabaseProxy/lines");
                 if (!linesResponse.ok) throw new Error("Failed to fetch lines");
-                const linesData = await linesResponse.json();
-                setLines(linesData);
+                // const linesData = await linesResponse.json();
+                // setLines(linesData);
 
                 //Fetch trains
                 const trainsResponse = await fetch("/api/supabaseProxy/trains");
                 if(!trainsResponse.ok) throw new Error("Failed to fetch trains.");
-                const trainsData = await trainsResponse.json();
-                setTrains(trainsData);
+                // const trainsData = await trainsResponse.json();
+                // setTrains(trainsData);
 
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -195,23 +195,23 @@ export default function Home() {
 
 
   // --- Click Handlers ---
-  const handleStationClick = (station: Station) => {
-    setSelectedResource(station); // Set the selected station
-    setIsDrawerOpen(true); // Open the drawer
-  };
+  // const handleStationClick = (station: Station) => {
+  //   setSelectedResource(station); // Set the selected station
+  //   setIsDrawerOpen(true); // Open the drawer
+  // };
 
 
 
   return (
     <div className="relative h-screen w-screen">
-      <MapDisplay
+      {/* <MapDisplay
         stations={stations}
         trains={trains}
         surgeEvents={surgeEvents}
         routes={routes}
         lines={lines}
         onStationClick={handleStationClick}
-      />
+      /> */}
       <div className="absolute top-24 right-4 z-10 flex flex-col space-y-4">
         <ButtonWithSkeleton isLoading={isLoading} initialPassengers={initialPassengers}>
             Passenger Panel
