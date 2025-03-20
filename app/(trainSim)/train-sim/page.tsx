@@ -110,10 +110,10 @@ export default function Home() {
   const [satisfaction, setSatisfaction] = useState<number>(100);
   const [loadingSatisfaction, setLoadingSatisfaction] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedResource, setSelectedResource] = useState<Station | null>(null); //  Store the selected station
+  // const [selectedResource, setSelectedResource] = useState<Station | null>(null); //  Store the selected station
 
-  setSelectedResource(selectedResource || null);
-  setIsDrawerOpen(isDrawerOpen || false);
+  // setSelectedResource(selectedResource || null);
+  // setIsDrawerOpen(isDrawerOpen || false);
   
 
   // Fetch initial data (stations, routes, lines, trains)
