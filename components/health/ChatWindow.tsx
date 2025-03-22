@@ -1,9 +1,11 @@
-// components/ChatWindow.tsx (ChatWindow - Client Component)
+// components/ChatWindow.tsx
 "use client"
 import { useState, useEffect, useRef } from 'react';
 import { Message } from '@/lib/types';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
+import { Skeleton } from "@/components/ui/skeleton";
+
 
 interface ChatWindowProps {
     chatId: string;
@@ -61,13 +63,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, initialMessages }) => {
     };
 
     return (
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col">
             <div className="flex-grow overflow-y-auto">
-                {/* Display current agent */}
-                <div className="p-4 bg-gray-100 border-b">
+                <div className="p-4 border-b">
                     Chatting with: {nextAgent ? nextAgent.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Nurse'}
                 </div>
-                <div className="p-4">
+                <div className="p-4 space-y-4">
+                   {loading && (
+                    <>
+                      <Skeleton className="w-[250px] h-[40px] rounded-full" />
+                      <Skeleton className="w-[300px] h-[20px] rounded-full" />
+                    </>
+                  )}
                     {messages.map((message) => (
                         <ChatMessage key={message.id} message={message} />
                     ))}

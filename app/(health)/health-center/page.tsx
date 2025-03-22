@@ -10,12 +10,12 @@ export default function Home() {
 
     const handleChatStarted = (chatId: string) => {
         setChatId(chatId);
-         router.push(`/health-center/chat/${chatId}`); //Naviagate to chat.
+         router.push(`/chat/${chatId}`); //Naviagate to chat.
 
     };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+    <main className="flex flex-col items-center justify-center p-24">
       {!chatId && <UserOnboardingForm onSuccess={handleChatStarted} />}
     </main>
   );

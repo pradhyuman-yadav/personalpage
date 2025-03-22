@@ -1,7 +1,11 @@
 // components/UserOnboardingForm.tsx
 "use client";
 import { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea"
 
 
 interface UserOnboardingFormProps {
@@ -38,7 +42,7 @@ const UserOnboardingForm: React.FC<UserOnboardingFormProps> = ({ onSuccess }) =>
       }
 
       const { chatId } = await response.json();
-      onSuccess(chatId); // Notify parent component
+      onSuccess(chatId);
         router.push(`/chat/${chatId}`); //Naviagate to chat.
     } catch (error: any) {
       setError(error.message);
@@ -50,43 +54,39 @@ const UserOnboardingForm: React.FC<UserOnboardingFormProps> = ({ onSuccess }) =>
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-        <input
+        <Label htmlFor="name">Name</Label>
+        <Input
           type="text"
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          placeholder="Enter your name"
         />
       </div>
       <div>
-        <label htmlFor="age" className="block text-sm font-medium text-gray-700">Age</label>
-        <input
+        <Label htmlFor="age">Age</Label>
+        <Input
           type="number"
           id="age"
           value={age}
           onChange={(e) => setAge(e.target.value)}
           required
-          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          placeholder="Enter your age"
         />
       </div>
       <div>
-        <label htmlFor="otherInfo" className="block text-sm font-medium text-gray-700">Other Info (Optional)</label>
-        <textarea
+        <Label htmlFor="otherInfo">Other Info (Optional)</Label>
+        <Textarea
           id="otherInfo"
           value={otherInfo}
           onChange={(e) => setOtherInfo(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          placeholder="Any other relevant information"
         />
       </div>
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
+      <Button type="submit" disabled={loading} variant="default">
         {loading ? 'Starting Chat...' : 'Start Chat'}
-      </button>
+      </Button>
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </form>
   );
