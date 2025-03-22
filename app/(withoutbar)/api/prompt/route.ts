@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
     const combinedInputValues = {
       question: userQuestion as string,
-      history: "History: "+historyString.slice(0, 300) as string,
+      history: "History: "+historyString.slice(0, 250) as string,
     };
     if (historyString) {
       combinedInputValues.history = historyString;

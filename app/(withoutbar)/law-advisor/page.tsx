@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Disclaimer } from "@/app/(components)/Disclaimer";
-import { PromptForm } from "@/app/(components)/PromptForm";
-import { ResultDisplay } from "@/app/(components)/ResultDisplay";
-import { LoadingSpinner } from "@/app/(components)/LoadingSpinner";
+import { Disclaimer } from "@/components/lawAdvisorUtil/Disclaimer";
+import { PromptForm } from "@/components/lawAdvisorUtil/PromptForm";
+import { ResultDisplay } from "@/components/lawAdvisorUtil/ResultDisplay";
+import { LoadingSpinner } from "@/components/lawAdvisorUtil/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -32,46 +32,46 @@ export default function Home() {
     }
   }, []);
 
-  // Fetch history ONLY when promptId changes, and it's NOT a new prompt
-  // useEffect(() => {
-  //     const fetchHistory = async () => {
-  //     if (promptId && !isNewPrompt) {
-  //         setLoading(true);
-  //         setError(null);
-  //         try {
-  //         const response = await fetch("/api/prompt", {
-  //             method: "POST",
-  //             headers: { "Content-Type": "application/json" },
-  //             body: JSON.stringify({ promptId }),
-  //         });
+    useEffect(() => {
+        const fetchHistory = async () => {
+        if (promptId) { // Remove !isNewPrompt
+            setLoading(true);
+            setError(null);
+            try {
+            const response = await fetch("/api/prompt", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ promptId }),
+            });
 
-  //         if (response.ok) {
-  //             const data = await response.json();
-  //             if (data.history) {
-  //             const parsed = parseHistory(data.history);
-  //             setConversationHistory(parsed);
-  //             historyRef.current = parsed;
-  //             } else {
-  //             setConversationHistory([]);
-  //             historyRef.current = [];
-  //             }
-  //         } else {
-  //             const errorData = await response.json();
-  //             setError(errorData.error || "Failed to fetch history");
-  //             setPromptId(null);
-  //             if (typeof window !== "undefined") {
-  //             localStorage.removeItem("promptId");
-  //             }
-  //         }
-  //         } catch (error) {
-  //         setError("An unexpected error occurred.");
-  //         } finally {
-  //         setLoading(false);
-  //         }
-  //     }
-  //     };
-  //     fetchHistory();
-  // }, [promptId, isNewPrompt]); // Depend on isNewPrompt as well
+            if (response.ok) {
+                const data = await response.json();
+                if (data.history) {
+                const parsed = parseHistory(data.history);
+                setConversationHistory(parsed);
+                historyRef.current = parsed;
+                } else {
+                setConversationHistory([]);
+                historyRef.current = [];
+                }
+            } else {
+                const errorData = await response.json();
+                setError(errorData.error || "Failed to fetch history");
+                setPromptId(null); // Clear invalid promptId
+                if (typeof window !== "undefined") {
+                localStorage.removeItem("promptId"); // Remove from localStorage
+                }
+            }
+            } catch (error) {
+            setError("An unexpected error occurred.");
+            } finally {
+            setLoading(false);
+            }
+        }
+        };
+        fetchHistory();
+    }, [promptId]); // Only depend on PromptId
+
 
   // Save promptId to localStorage
   useEffect(() => {
@@ -79,6 +79,13 @@ export default function Home() {
       localStorage.setItem("promptId", promptId);
     }
   }, [promptId]);
+
+    //useEffect for promptIdInput
+    useEffect(()=>{
+        if(promptId){
+            setPromptIdInput(promptId)
+        }
+    }, [promptId])
 
   const handlePromptSubmit = async (promptText: string) => {
     if (!promptText.trim()) {
@@ -89,23 +96,24 @@ export default function Home() {
     setLoading(true);
     setError(null);
 
-    // const historyString = historyRef.current
-    //   .map((turn) => `${turn.role === "user" ? "User" : "Assistant"}: ${turn.content}`)
-    //   .join("\n");
+        const historyString = historyRef.current
+        .map((turn) => `${turn.role === "user" ? "User" : "Assistant"}: ${turn.content}`)
+        .join("\n");
 
-    // const inputValues: Record<string, any> = {
-    //   question: promptText,
-    //   history: historyString,
-    // };
+        const inputValues: Record<string, any> = {
+            question: promptText,
+            history: historyString,
+        };
+
 
     try {
       const response = await fetch("/api/prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          promptId,
-          userQuestion: promptText,
-        }),
+            body: JSON.stringify({
+                promptId,
+                inputValues, // Send complete inputValues
+            }),
       });
 
       if (response.ok) {

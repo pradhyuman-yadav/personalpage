@@ -162,6 +162,11 @@ export default function NavigationMenuDemo() {
                 Law
               </NavigationMenuLink>
             </Link>
+            <Link href="/health-center" legacyBehavior passHref>
+              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                Health Center
+              </NavigationMenuLink>
+            </Link>
             <NavigationMenuItem>
               <ModeToggle />
             </NavigationMenuItem>

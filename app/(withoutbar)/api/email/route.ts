@@ -1,8 +1,8 @@
-// app/api/email/route.ts (No changes)
+// app/api/email/route.ts
 import { NextResponse } from 'next/server';
 import { generateEmailAddress } from '@/lib/email';
 
-export async function POST() {
+export async function POST(req: Request) {
     try {
         const email = generateEmailAddress();
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // Expires in 1 hour
@@ -21,6 +21,7 @@ export async function POST() {
             body: JSON.stringify({ address: email, expires_at: expiresAt.toISOString() }),
         });
 
+
         if (!response.ok) {
             let errorMessage = `Failed to create email (HTTP ${response.status})`;
             try {
@@ -31,11 +32,14 @@ export async function POST() {
             }
             throw new Error(errorMessage);
         }
+        const data = await response.json(); // Parse the response JSON
 
-        return NextResponse.json({ email, expiresAt }, { status: 201 });
+        // Return the ID *and* the email address and expiresAt
+        return NextResponse.json({ email: data[0].address, expiresAt, id: data[0].id }, { status: 201 });
 
-    } catch (error: unknown) {
+
+    } catch (error: any) {
         console.error("Error generating email:", error);
-        return NextResponse.json({ error: String(error) }, { status: 500 });
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

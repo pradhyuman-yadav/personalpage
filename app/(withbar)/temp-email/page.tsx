@@ -1,95 +1,97 @@
-// app/page.tsx (Corrected)
-"use client";
-import { useState, useEffect } from 'react';
-import EmailDisplay from '@/components/email/EmailDisplay';
-import Inbox from '@/components/email/Inbox';
-import { Button } from "@/components/ui/button";
+// components/Inbox.tsx
+// import { useEffect, useState } from 'react';
 
-export default function Home() {
-    const [email, setEmail] = useState('');
-    const [emailId, setEmailId] = useState('');  // Use email ID, not the address, for fetching messages
-    const [expiresAt, setExpiresAt] = useState<Date | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+// interface Message {
+//     id: string;
+//     sender: string;
+//     subject: string;
+//     body: string;
+//     received_at: string;
+// }
 
-    const handleGenerateEmail = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const baseUrl = window.location.origin;
-            const response = await fetch(`${baseUrl}/api/email`, { method: 'POST' });
-            const data = await response.json();
+interface InboxProps {
+    emailId: string;
+}
 
-            if (response.ok) {
-                setEmail(data.email);
-                // Do NOT set emailId here.  Get it in the useEffect.
-                setExpiresAt(new Date(data.expiresAt));
-            } else {
-                setError(data.error || 'Failed to generate email');
-            }
-        } catch (err: unknown) {
-            setError(String(err) || 'An error occurred');
-        } finally {
-            setLoading(false);
-        }
-    };
+export default function Inbox({ emailId }: InboxProps) {
+    // const [messages, setMessages] = useState<Message[]>([]);
+    // const [loading, setLoading] = useState(true);
+    // const [error, setError] = useState<string | null>(null);
 
-    // Fetch the email ID *after* the email address is set
-    useEffect(() => {
-        const fetchEmailId = async () => {
-            if (!email) return;
+    // useEffect(() => {
+    //     const fetchMessages = async () => {
+    //         if (!emailId) {
+    //             setLoading(false);
+    //             return;
+    //         }
 
-            setLoading(true);
-            setError(null);
-            try {
-                const baseUrl = window.location.origin;
-                const response = await fetch(`${baseUrl}/api/supabaseProxy/emails/select/id/where/address/eq/${encodeURIComponent(email)}/order/created_at/desc/limit/1`);
-                const data = await response.json();
+    //         setLoading(true);
+    //         setError(null);
+    //         try {
+    //             const baseUrl = window.location.origin;
+    //             const messagesUrl = new URL(`/api/supabaseProxy/messages/select/*/where/email_id/eq/${emailId}/order/received_at/desc`, baseUrl).toString();
+    //             const response = await fetch(messagesUrl);
+    //             const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data.message || "Failed to fetch email ID");
-                }
+    //             if (!response.ok) {
+    //                 setError(data.message || 'Failed to fetch messages');
+    //                 return;
+    //             }
+    //             setMessages(data || []); // Ensure we always have an array
 
-                // Check if data is empty (email not found yet)
-                if (data.length > 0) {
-                    setEmailId(data[0].id); // Set the email ID!
-                }
+    //         } catch (err: any) {
+    //             setError(err.message || 'An error occurred');
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
 
-            } catch (err: unknown) {
-                setError(String(err) || 'An error occurred while fetching email ID');
-            } finally {
-                setLoading(false);
-            }
-        };
-      fetchEmailId();
+    //     if (emailId) { // Only fetch if we have an emailId
+    //         fetchMessages(); // Initial fetch
+    //         const intervalId = setInterval(fetchMessages, 5000); // Poll every 5 seconds
 
-        // Set up interval to refetch email ID (in case of race conditions)
-        const intervalId = setInterval(fetchEmailId, 5000);
+    //         return () => clearInterval(intervalId); // Cleanup on unmount
+    //     }
 
-        return () => clearInterval(intervalId);
-    }, [email]); // Run this effect when `email` changes
+    // }, [emailId]); // Dependency array: re-run when emailId changes
 
 
+    // if (loading) {
+    //     return <div className="mt-4 p-4 border rounded-md shadow-sm">Loading messages...</div>;
+    // }
+
+    // if (error) {
+    //     return <div className="mt-4 p-4 border rounded-md shadow-sm text-red-500">Error: {error}</div>;
+    // }
+
+    // return (
+    //     <div className="mt-4 p-4 border rounded-md shadow-sm">
+    //         <h2 className="text-xl font-bold mb-4">Inbox for {emailId}</h2>
+    //          {messages.length === 0 ? (
+    //             <p>No messages yet.</p>
+    //         ) : (
+    //             <ul>
+    //                 {messages.map((message) => (
+    //                      <li key={message.id} className="mb-4 p-4 border rounded-md shadow-sm">
+    //                         <p>
+    //                             <strong>From:</strong> {message.sender}
+    //                         </p>
+    //                         <p>
+    //                             <strong>Subject:</strong> {message.subject}
+    //                         </p>
+    //                         <p>
+    //                             <strong>Received:</strong> {new Date(message.received_at).toLocaleString()}
+    //                         </p>
+    //                         <p className="mt-2">{message.body}</p>
+    //                     </li>
+    //                 ))}
+    //             </ul>
+    //         )}
+    //     </div>
+    // );
     return (
-        <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Temporary Email Generator</h1>
-
-            <Button
-                onClick={handleGenerateEmail}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                disabled={loading}
-            >
-                {loading ? 'Generating...' : 'Generate Email'}
-            </Button>
-
-            {error && <div className="text-red-500 mt-2">{error}</div>}
-
-            {email && (
-                <>
-                    <EmailDisplay email={email} expiresAt={expiresAt} />
-                    <Inbox emailId={emailId} /> {/* Pass the emailId */}
-                </>
-            )}
+        <div>
+            Inbox for {emailId}
         </div>
     );
 }
