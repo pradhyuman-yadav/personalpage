@@ -1,281 +1,331 @@
 // app/api/chat/[chatId]/message/route.ts
-
-import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdmin } from '@/lib/supabaseClient';
-import { callGemini } from '@/lib/gemini';
-import { agents } from '@/lib/agents';
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseAdmin } from "@/lib/supabaseClient";
+import { callGemini } from "@/lib/gemini";
+import { agents } from "@/lib/agents";
 import { Message as VercelChatMessage } from "ai";
 
-const RATE_LIMIT_DURATION = 60 * 1000; // 60 seconds (1 minute) - adjust as needed
-const MAX_REQUESTS_PER_DURATION = 100;  // Max requests per minute - adjust as needed
-
 export async function POST(
-    request: NextRequest,
-    context: { params: { chatId: string } }
+  request: NextRequest,
+  context: { params: { chatId: string } }
 ) {
-    const { chatId } = context.params;
-    const supabase = createSupabaseAdmin();
-    const reqBody = await request.json();
-    const { message }: { message: string } = reqBody;
+  const { chatId } = context.params;
+  const supabase = createSupabaseAdmin();
+  const reqBody = await request.json();
+  const { message }: { message: string } = reqBody; // User's *text* message
 
-    if (!message) {
-        return NextResponse.json({ error: "Message is required" }, { status: 400 });
-    }
+  if (!message) {
+    return NextResponse.json({ error: "Message is required" }, { status: 400 });
+  }
 
-    // --- Rate Limiting ---
-    const { data: rateLimitData, error: rateLimitError } = await supabase
-        .from('rate_limits')
-        .select('last_reset, requests_remaining')
-        .eq('id', 'global')
-        .single(); // Fetch the single row
+  // --- Rate Limiting (Corrected Call) ---
+  try {
+    const { data: rateLimitData, error: rateLimitError } = await supabase.rpc(
+      "handle_rate_limit"
+    ); // NO PARAMETERS!
 
     if (rateLimitError) {
-        console.error("Error fetching rate limit:", rateLimitError);
-        return NextResponse.json({ error: "Rate limit check failed" }, { status: 500 });
+      console.error("Error in rate limit RPC:", rateLimitError);
+      return NextResponse.json(
+        { error: "Rate limit check/update failed" },
+        { status: 500 }
+      );
     }
 
-    let { last_reset, requests_remaining } = rateLimitData!;
-    const now = Date.now();
-    const resetTime = new Date(last_reset).getTime() + RATE_LIMIT_DURATION;
+    if (!rateLimitData) {
+      console.error("Rate limit RPC returned no data");
+      return NextResponse.json(
+        { error: "Rate limit check/update failed" },
+        { status: 500 }
+      );
+    }
 
-      if (now > resetTime) {
-        // Reset the rate limit
-        const { error: updateError } = await supabase
-            .from('rate_limits')
-            .update({ last_reset: new Date(now).toISOString(), requests_remaining: MAX_REQUESTS_PER_DURATION })
-            .eq('id', 'global');
-
-        if (updateError) {
-            console.error("Error resetting rate limit:", updateError);
-            return NextResponse.json({ error: "Rate limit reset failed" }, { status: 500 });
+    if (!rateLimitData.allowed) {
+      const retryAfterSeconds = rateLimitData.retry_after ?? 60;
+      return NextResponse.json(
+        { error: "Rate limit exceeded", retryAfter: retryAfterSeconds },
+        {
+          status: 429,
+          headers: { "Retry-After": retryAfterSeconds.toString() },
         }
-        last_reset = new Date(now).toISOString();
-        requests_remaining = MAX_REQUESTS_PER_DURATION;
+      );
     }
+  } catch (err) {
+    console.error("Error in rate limit transaction:", err);
+    return NextResponse.json(
+      { error: "Rate limit check/update failed" },
+      { status: 500 }
+    );
+  }
 
-    if (requests_remaining <= 0) {
-        const timeLeft = Math.max(0, Math.ceil((resetTime - now) / 1000)); // Time left in seconds
+  // --- (Rest of your API route logic - from "Get Chat Session" onwards) ---
+
+  const { data: chatSession, error: chatSessionError } = await supabase
+    .from("chat_sessions")
+    .select("*, users(name, age)")
+    .eq("chat_id", chatId)
+    .single();
+
+  if (chatSessionError || !chatSession) {
+    return NextResponse.json({ error: "Invalid chat ID" }, { status: 404 });
+  }
+  const userName = chatSession.users?.name;
+  const userAge = chatSession.users?.age;
+
+  const { data: currentAgentData, error: currentAgentError } = await supabase
+    .from("chat_sessions")
+    .select("current_agent")
+    .eq("chat_id", chatId)
+    .single();
+
+  if (currentAgentError) {
+    return NextResponse.json(
+      { error: "Failed to fetch current agent" },
+      { status: 500 }
+    );
+  }
+
+  let currentAgent = currentAgentData?.current_agent || "nurse";
+
+  // --- Insert *USER* Message ---
+  const { error: userMessageError } = await supabase.from("messages").insert([
+    {
+      chat_session_id: chatSession.id,
+      sender_type: "user",
+      sender_name: userName,
+      message_text: message,
+    },
+  ]);
+
+  if (userMessageError) {
+    console.error("Error inserting user message:", userMessageError);
+    return NextResponse.json(
+      { message: "Failed to send message" },
+      { status: 500 }
+    );
+  }
+
+  // Fetch history *before* agent/interpreter calls
+  let { data: chatHistory, error: historyError } = await supabase //Type casting
+    .from("messages")
+    .select("*")
+    .eq("chat_session_id", chatSession.id)
+    .order("sent_at", { ascending: true });
+
+  if (historyError) {
+    console.error("Error fetching chat history:", historyError);
+    return NextResponse.json(
+      { message: "Failed to fetch chat history" },
+      { status: 500 }
+    );
+  }
+
+  // --- Current Agent Response ---
+  let agentResponse = await callGemini(currentAgent, chatHistory ?? [], message); // Pass message here
+
+  // Handle [FOR USER] for the current agent
+  if (agentResponse.text.startsWith("[FOR USER]")) {
+    const userMessage = agentResponse.text
+      .substring("[FOR USER]".length)
+      .trim();
+    const { error: agentMessageError } = await supabase
+      .from("messages")
+      .insert([
+        {
+          chat_session_id: chatSession.id,
+          sender_type: currentAgent,
+          sender_name: currentAgent,
+          message_text: userMessage,
+          formatted_data: agentResponse.formattedData, //Store if needed
+        },
+      ]);
+    if (agentMessageError) {
+      console.error("Error inserting agent response:", agentMessageError);
+    }
+  }
+
+  // --- Handle "Suggest:" for the current agent (primarily for Nurse)---
+  let nextAgent = currentAgent; // Keep current agent by default.
+
+  if (agentResponse.text.startsWith("Suggest:")) {
+    let suggestedAgent = agentResponse.text
+      .substring("Suggest:".length)
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_");
+
+    if (Object.keys(agents).includes(suggestedAgent)) {
+      nextAgent = suggestedAgent;
+      //Agent switching message.
+      const agentDisplayName = nextAgent
+        .replace(/_/g, " ")
+        .split(" ")
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+      let agentChangeMessage = `${agentDisplayName} has joined the chat.`;
+
+      const { error: updateChatError } = await supabase
+        .from("chat_sessions")
+        .update({ current_agent: nextAgent })
+        .eq("id", chatSession.id);
+
+      if (updateChatError) {
+        console.error("Failed to update current agent:", updateChatError);
         return NextResponse.json(
-            { error: "Rate limit exceeded", retryAfter: timeLeft },
-            { status: 429, headers: { 'Retry-After': timeLeft.toString() } } //  429 Too Many Requests
+          { error: "Failed to update current agent" },
+          { status: 500 }
         );
-    }
-      // Decrement requests remaining
-    const { error: decrementError } = await supabase
-        .from('rate_limits')
-        .update({ requests_remaining: requests_remaining - 1 })
-        .eq('id', 'global');
+      }
 
-        if (decrementError) {
-             console.error("Failed to decrement", decrementError);
-            return NextResponse.json({ error: "Failed to decrement the limit" }, { status: 500 });
-        }
-
-    // --- (Rest of your API route logic - from "Get Chat Session" onwards) ---
-    const { data: chatSession, error: chatSessionError } = await supabase
-        .from("chat_sessions")
-        .select("*, users(name, age)")
-        .eq("chat_id", chatId)
-        .single();
-
-    if (chatSessionError || !chatSession) {
-        return NextResponse.json({ error: "Invalid chat ID" }, { status: 404 });
-    }
-    const userName = chatSession.users?.name;
-    const userAge = chatSession.users?.age;
-
-    const { data: currentAgentData, error: currentAgentError } = await supabase
-        .from("chat_sessions")
-        .select("current_agent")
-        .eq("chat_id", chatId)
-        .single();
-
-    if (currentAgentError) {
-        return NextResponse.json({ error: "Failed to fetch current agent" }, { status: 500 });
-    }
-
-    let currentAgent = currentAgentData?.current_agent || 'nurse';
-
-    // --- Insert *USER* Message ---
-    const { error: userMessageError } = await supabase
+      const { error: notificationError } = await supabase
         .from("messages")
         .insert([
-            {
-                chat_session_id: chatSession.id,
-                sender_type: "user",
-                sender_name: userName,
-                message_text: message,
-            },
+          {
+            chat_session_id: chatSession.id,
+            sender_type: "system",
+            sender_name: "System",
+            message_text: agentChangeMessage,
+          },
         ]);
+      if (notificationError) {
+        console.error(
+          "Error inserting notification message:",
+          notificationError
+        );
+      }
+      //Refetch chat history.
+      const { data: updatedChatHistory, error: updatedHistoryError } =
+        await supabase
+          .from("messages")
+          .select("*")
+          .eq("chat_session_id", chatSession.id)
+          .order("sent_at", { ascending: true });
 
-    if (userMessageError) {
-        console.error("Error inserting user message:", userMessageError);
-        return NextResponse.json({ message: "Failed to send message" }, { status: 500 });
-    }
+      if (updatedHistoryError) {
+        console.error("Error re-fetching chat history:", updatedHistoryError);
+        return NextResponse.json(
+          { message: "Failed to refetch chat history" },
+          { status: 500 }
+        ); // Critical error
+      }
 
-    // Fetch history *before* agent/interpreter calls
-    const { data: chatHistory, error: historyError } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('chat_session_id', chatSession.id)
-        .order('sent_at', { ascending: true });
-
-    if (historyError) {
-        console.error('Error fetching chat history:', historyError);
-        return NextResponse.json({ message: 'Failed to fetch chat history' }, { status: 500 });
-    }
-
-    // --- Current Agent Response ---
-    let agentResponse = await callGemini(currentAgent, chatHistory, message); // Pass message here
-
-    // Handle [FOR USER] for the current agent
-    if (agentResponse.text.startsWith("[FOR USER]")) {
-        const userMessage = agentResponse.text.substring("[FOR USER]".length).trim();
-        const { error: agentMessageError } = await supabase.from("messages").insert([
+      // --- Call New Agent ---
+      const newAgentResponse = await callGemini(nextAgent, updatedChatHistory!);
+      // Check for [FOR USER] tag for the new agent's initial message
+      if (newAgentResponse.text.startsWith("[FOR USER]")) {
+        const userMessage = newAgentResponse.text
+          .substring("[FOR USER]".length)
+          .trim();
+        const { error: newAgentMessageError } = await supabase
+          .from("messages")
+          .insert([
             {
-                chat_session_id: chatSession.id,
-                sender_type: currentAgent,
-                sender_name: currentAgent,
-                message_text: userMessage,
-                formatted_data: agentResponse.formattedData, // Store any formatted data (might be from a future feature)
+              chat_session_id: chatSession.id,
+              sender_type: nextAgent,
+              sender_name: nextAgent,
+              message_text: userMessage, //Insert user specific message.
+              formatted_data: newAgentResponse.formattedData,
             },
+          ]);
+        if (newAgentMessageError) {
+          console.error(
+            "Error inserting new agent's initial message:",
+            newAgentMessageError
+          );
+        }
+      }
+    }
+  } else {
+    // --- Call Interpreter ---
+    const interpreterResponse = await callGemini("interpreter", [], message); // Pass ONLY the user message.
+    const suggestedAgent = interpreterResponse.text.trim();
+
+    if (suggestedAgent && Object.keys(agents).includes(suggestedAgent)) {
+      nextAgent = suggestedAgent;
+
+      const agentDisplayName = nextAgent
+        .replace(/_/g, " ")
+        .split(" ")
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+      let agentChangeMessage = `${agentDisplayName} has joined the chat.`;
+
+      const { error: updateChatError } = await supabase
+        .from("chat_sessions")
+        .update({ current_agent: nextAgent })
+        .eq("id", chatSession.id);
+
+      if (updateChatError) {
+        console.error("Failed to update current agent:", updateChatError);
+        return NextResponse.json(
+          { error: "Failed to update current agent" },
+          { status: 500 }
+        );
+      }
+
+      const { error: notificationError } = await supabase
+        .from("messages")
+        .insert([
+          {
+            chat_session_id: chatSession.id,
+            sender_type: "system",
+            sender_name: "System",
+            message_text: agentChangeMessage,
+          },
         ]);
-        if (agentMessageError) {
-            console.error("Error inserting agent response:", agentMessageError);
-        }
-    }
+      if (notificationError) {
+        console.error(
+          "Error inserting notification message:",
+          notificationError
+        );
+      }
+      //Refetch chat history.
+      const { data: updatedChatHistory, error: updatedHistoryError } =
+        await supabase
+          .from("messages")
+          .select("*")
+          .eq("chat_session_id", chatSession.id)
+          .order("sent_at", { ascending: true });
 
-    // --- Handle "Suggest:" for the current agent (primarily for Nurse)---
-    let nextAgent = currentAgent; // Keep current agent by default.
+      if (updatedHistoryError) {
+        console.error("Error re-fetching chat history:", updatedHistoryError);
+        return NextResponse.json(
+          { message: "Failed to refetch chat history" },
+          { status: 500 }
+        ); // Critical error
+      }
 
-    if (agentResponse.text.startsWith("Suggest:")) {
-        let suggestedAgent = agentResponse.text.substring("Suggest:".length).trim().toLowerCase().replace(/\s+/g, '_');
+      // --- Call New Agent ---
+      const newAgentResponse = await callGemini(nextAgent, updatedChatHistory!);
 
-        if (Object.keys(agents).includes(suggestedAgent)) {
-            nextAgent = suggestedAgent;
-            //Agent switching message.
-            const agentDisplayName = nextAgent.replace(/_/g, ' ').split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-            let agentChangeMessage = `${agentDisplayName} has joined the chat.`;
-
-            const { error: updateChatError } = await supabase
-            .from('chat_sessions')
-            .update({ current_agent: nextAgent })
-            .eq('id', chatSession.id);
-
-            if (updateChatError) {
-                console.error('Failed to update current agent:', updateChatError);
-                return NextResponse.json({ error: "Failed to update current agent" }, { status: 500 });
-            }
-
-            const { error: notificationError } = await supabase.from('messages').insert([
+      // Check for [FOR USER] tag for the new agent's initial message
+      if (newAgentResponse.text.startsWith("[FOR USER]")) {
+        const userMessage = newAgentResponse.text
+          .substring("[FOR USER]".length)
+          .trim();
+        const { error: newAgentMessageError } = await supabase
+          .from("messages")
+          .insert([
             {
-                chat_session_id: chatSession.id,
-                sender_type: 'system',
-                sender_name: 'System',
-                message_text: agentChangeMessage,
+              chat_session_id: chatSession.id,
+              sender_type: nextAgent,
+              sender_name: nextAgent,
+              message_text: userMessage, //Insert user specific message.
+              formatted_data: newAgentResponse.formattedData,
             },
-            ]);
-            if (notificationError) {
-                console.error('Error inserting notification message:', notificationError);
-            }
-            //Refetch chat history.
-            const { data: updatedChatHistory, error: updatedHistoryError } = await supabase
-                .from('messages')
-                .select('*')
-                .eq('chat_session_id', chatSession.id)
-                .order('sent_at', { ascending: true });
-
-            if (updatedHistoryError) {
-                console.error('Error re-fetching chat history:', updatedHistoryError);
-                return NextResponse.json({message: 'Failed to refetch chat history'}, {status: 500}); // Critical error
-            }
-
-            // --- Call New Agent ---
-            const newAgentResponse = await callGemini(nextAgent, updatedChatHistory);
-            // Check for [FOR USER] tag for the new agent's initial message
-            if (newAgentResponse.text.startsWith("[FOR USER]")) {
-                    const userMessage = newAgentResponse.text.substring("[FOR USER]".length).trim();
-                    const { error: newAgentMessageError } = await supabase.from('messages').insert([
-                    {
-                        chat_session_id: chatSession.id,
-                        sender_type: nextAgent,
-                        sender_name: nextAgent,
-                        message_text: userMessage, //Insert user specific message.
-                        formatted_data: newAgentResponse.formattedData,
-                    },
-                ]);
-                if (newAgentMessageError) {
-                    console.error("Error inserting new agent's initial message:", newAgentMessageError);
-                }
-            }
-
+          ]);
+        if (newAgentMessageError) {
+          console.error(
+            "Error inserting new agent's initial message:",
+            newAgentMessageError
+          );
         }
-    }  else {
-        // --- Call Interpreter ---
-        const interpreterResponse = await callGemini("interpreter", [], message); // Pass ONLY the user message.
-        const suggestedAgent = interpreterResponse.text.trim();
-
-        if (suggestedAgent && Object.keys(agents).includes(suggestedAgent)) {
-            nextAgent = suggestedAgent;
-
-            const agentDisplayName = nextAgent.replace(/_/g, ' ').split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                let agentChangeMessage = `${agentDisplayName} has joined the chat.`;
-
-                const { error: updateChatError } = await supabase
-                .from('chat_sessions')
-                .update({ current_agent: nextAgent })
-                .eq('id', chatSession.id);
-
-                if (updateChatError) {
-                    console.error('Failed to update current agent:', updateChatError);
-                    return NextResponse.json({ error: "Failed to update current agent" }, { status: 500 });
-                }
-
-                const { error: notificationError } = await supabase.from('messages').insert([
-                {
-                    chat_session_id: chatSession.id,
-                    sender_type: 'system',
-                    sender_name: 'System',
-                    message_text: agentChangeMessage,
-                },
-                ]);
-                if (notificationError) {
-                    console.error('Error inserting notification message:', notificationError);
-                }
-            //Refetch chat history.
-            const { data: updatedChatHistory, error: updatedHistoryError } = await supabase
-                .from('messages')
-                .select('*')
-                .eq('chat_session_id', chatSession.id)
-                .order('sent_at', { ascending: true });
-
-            if (updatedHistoryError) {
-                console.error('Error re-fetching chat history:', updatedHistoryError);
-                return NextResponse.json({message: 'Failed to refetch chat history'}, {status: 500}); // Critical error
-            }
-
-            // --- Call New Agent ---
-            const newAgentResponse = await callGemini(nextAgent, updatedChatHistory);
-
-            // Check for [FOR USER] tag for the new agent's initial message
-            if (newAgentResponse.text.startsWith("[FOR USER]")) {
-                const userMessage = newAgentResponse.text.substring("[FOR USER]".length).trim();
-                const { error: newAgentMessageError } = await supabase.from('messages').insert([
-                    {
-                        chat_session_id: chatSession.id,
-                        sender_type: nextAgent,
-                        sender_name: nextAgent,
-                        message_text: userMessage, //Insert user specific message.
-                        formatted_data: newAgentResponse.formattedData,
-                    },
-                ]);
-                if (newAgentMessageError) {
-                    console.error("Error inserting new agent's initial message:", newAgentMessageError);
-                }
-            }
-
-        }
+      }
     }
+  }
 
-    return NextResponse.json({ success: true, nextAgent: nextAgent, userName, userAge }, { status: 200 });
+  return NextResponse.json(
+    { success: true, nextAgent: nextAgent, userName, userAge },
+    { status: 200 }
+  );
 }
