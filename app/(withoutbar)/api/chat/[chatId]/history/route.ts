@@ -1,8 +1,9 @@
+// app/api/chat/[chatId]/history/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdmin } from '@/lib/supabaseClient';
 
-export async function GET(request: NextRequest, context: { params: Promise<{ chatId: string }> }) {
-    const { chatId } = (await context.params);
+export async function GET(request: NextRequest, context: { params: { chatId: string } }) {
+    const { chatId } = context.params;
     const supabase = createSupabaseAdmin();
 
     const { data: chatSession, error: chatSessionError } = await supabase

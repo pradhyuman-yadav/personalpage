@@ -1,154 +1,25 @@
-// // app/api/chat/[chatId]/message/route.ts
+// app/api/chat/[chatId]/message/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabaseClient";
 import { callGemini } from "@/lib/gemini";
 import { agents } from "@/lib/agents";
 
-// export async function POST(
-//   request: NextRequest,
-//   context: { params: Promise<{ chatId: string }> }
-// ) {
-//   const { chatId } = (await context.params);
-//   const supabase = createSupabaseAdmin();
-//   const reqBody = await request.json();
-//   const { message }: { message: string } = reqBody;
-
-//   console.log('Received message:', message);
-
-//   if (!message) {
-//     return NextResponse.json({ error: "Message is required" }, { status: 400 });
-//   }
-
-//   // 1. Get Chat Session (to link message)
-//   const { data: chatSession, error: chatSessionError } = await supabase
-//     .from("chat_sessions")
-//     .select("*")
-//     .eq("chat_id", chatId).single();
-
-//   if (chatSessionError || !chatSession) {
-//     return NextResponse.json({ error: "Invalid chat ID" }, { status: 404 });
-//   }
-//     // Get current Agent.
-//     const { data: currentAgentData, error: currentAgentError } = await supabase
-//     .from("chat_sessions")
-//     .select("current_agent")
-//     .eq("chat_id", chatId).single();
-
-//     if(currentAgentError){
-//         return NextResponse.json({ error: "Failed to fetch current agent" }, { status: 500 });
-//     }
-
-//     let currentAgent = currentAgentData?.current_agent || 'nurse'; // Default to nurse.
-
-//   // 2. Insert User Message into Supabase
-//   const { data: userMessage, error: userMessageError } = await supabase
-//     .from("messages")
-//     .insert([
-//       {
-//         chat_session_id: chatSession.id,
-//         sender_type: "user",
-//         sender_name: chatSession.user_id, // Or get the user's name
-//         message_text: message,
-//       },
-//     ]).select().single();
-
-//   if (userMessageError) {
-//     console.error("Error inserting user message:", userMessageError);
-//     return NextResponse.json({ message: "Failed to send message" }, { status: 500 });
-//   }
-//   // 3.  Fetch Chat History
-//   const { data: chatHistory, error: historyError } = await supabase
-//     .from('messages')
-//     .select('*')
-//     .eq('chat_session_id', chatSession.id)
-//     .order('sent_at', { ascending: true });
-
-//     if (historyError) {
-//         console.error('Error fetching chat history:', historyError);
-//         return NextResponse.json({ message: 'Failed to fetch chat history' }, { status: 500 });
-//     }
-
-//   // 4. Determine Next Agent and Call Gemini
-//   const geminiResponse = await callGemini(currentAgent, chatHistory);
-
-// // 5. Insert Gemini Response into Supabase
-//   const { error: geminiMessageError } = await supabase
-//   .from("messages")
-//   .insert([
-//     {
-//       chat_session_id: chatSession.id,
-//       sender_type: currentAgent, // Use current agent type
-//       sender_name: currentAgent,
-//       message_text: geminiResponse.text,
-//       formatted_data: geminiResponse.formattedData,
-//     },
-//   ]).select().single();
-
-// if (geminiMessageError) {
-//   console.error("Error inserting Gemini response:", geminiMessageError);
-//   return NextResponse.json(
-//     { message: "Failed to get AI response" },
-//     { status: 500 }
-//   );
-// }
-
-// // 6.  Process Gemini Response and Determine Next Agent
-// let nextAgent = currentAgent; // Default: keep the same agent
-
-// if (currentAgent === 'nurse') {
-//     const suggestionMatch = geminiResponse.text.match(/Suggest:\s*(.+)/);
-//     if (suggestionMatch) {
-//         const suggestedSpecialists = suggestionMatch[1].split(',').map(s => s.trim().toLowerCase().replace(/\s+/g, '_'));
-//          // Find first suggestion
-//         for(let suggestedSpecialist of suggestedSpecialists){
-//             if (Object.keys(agents).includes(suggestedSpecialist)) { // IMPORTANT: Check if valid
-//                 nextAgent = 'interpreter'; // Go to the Interpreter next
-//                 break;
-//             }
-//         }
-//     } else {
-//         nextAgent = 'interpreter'; // If nurse has no clear suggestion
-//     }
-// } else if (currentAgent === "interpreter") {
-//     if (geminiResponse.formattedData && geminiResponse.formattedData.suggestedSpecialist) {
-//       let suggested = geminiResponse.formattedData.suggestedSpecialist.toLowerCase().replace(/\s+/g, '_');
-//         if (Object.keys(agents).includes(suggested)) { // CRUCIAL: Validate the specialist
-//             nextAgent = suggested;
-//         } else {
-//             nextAgent = "general_practitioner"; // Default fallback
-//         }
-//     } else {
-//         nextAgent = "general_practitioner"; // Default fallback
-//     }
-// }
-// // 7. Store current agent
-// const { error: updateChatError } = await supabase
-//     .from('chat_sessions')
-//     .update({ current_agent: nextAgent })
-//     .eq('id', chatSession.id);
-// if(updateChatError){
-//     console.error('Failed to store current agent:', updateChatError);
-// }
-//   return NextResponse.json({ success: true, nextAgent }, { status: 200 }); // Return nextAgent
-// }
-
-// app/api/chat/[chatId]/message/route.ts
-
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ chatId: string }> }
+  context: { params: { chatId: string } }
 ) {
-  const { chatId } = await context.params;
+  const { chatId } = context.params;
   const supabase = createSupabaseAdmin();
   const reqBody = await request.json();
   const { message }: { message: string } = reqBody;
-  console.log("Received message:", message);
+
+  console.log('Received message:', message);
 
   if (!message) {
     return NextResponse.json({ error: "Message is required" }, { status: 400 });
   }
 
-  // 1. Get Chat Session (to link message)
+  // 1. Get Chat Session
   const { data: chatSession, error: chatSessionError } = await supabase
     .from("chat_sessions")
     .select("*")
@@ -158,7 +29,8 @@ export async function POST(
   if (chatSessionError || !chatSession) {
     return NextResponse.json({ error: "Invalid chat ID" }, { status: 404 });
   }
-  // Get current Agent.
+
+  // 2. Get Current Agent
   const { data: currentAgentData, error: currentAgentError } = await supabase
     .from("chat_sessions")
     .select("current_agent")
@@ -166,53 +38,112 @@ export async function POST(
     .single();
 
   if (currentAgentError) {
-    return NextResponse.json(
-      { error: "Failed to fetch current agent" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch current agent" }, { status: 500 });
   }
 
-  let currentAgent = currentAgentData?.current_agent || "nurse";
+  let currentAgent = currentAgentData?.current_agent || 'nurse';
+  console.log("Current Agent:", currentAgent);
 
-  // 2. Insert User Message into Supabase
-  const { data: userMessage, error: userMessageError } = await supabase
+  // 3. Insert User Message
+  const { error: userMessageError } = await supabase
     .from("messages")
     .insert([
       {
         chat_session_id: chatSession.id,
         sender_type: "user",
-        sender_name: chatSession.user_id, // Or get the user's name
+        sender_name: chatSession.user_id, //  get the user's name from  `users` table if needed
         message_text: message,
       },
-    ])
-    .select()
-    .single();
+    ]);
 
   if (userMessageError) {
     console.error("Error inserting user message:", userMessageError);
-    return NextResponse.json(
-      { message: "Failed to send message" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Failed to send message" }, { status: 500 });
   }
 
-  // 3.  Fetch Chat History
+  // 4. Fetch Chat History
   const { data: chatHistory, error: historyError } = await supabase
-    .from("messages")
-    .select("*")
-    .eq("chat_session_id", chatSession.id)
-    .order("sent_at", { ascending: true });
+    .from('messages')
+    .select('*')
+    .eq('chat_session_id', chatSession.id)
+    .order('sent_at', { ascending: true });
 
   if (historyError) {
-    console.error("Error fetching chat history:", historyError);
-    return NextResponse.json(
-      { message: "Failed to fetch chat history" },
-      { status: 500 }
-    );
+    console.error('Error fetching chat history:', historyError);
+    return NextResponse.json({ message: 'Failed to fetch chat history' }, { status: 500 });
   }
 
-  // 4. Determine Next Agent and Call Gemini
-//   const geminiResponse = await callGemini(currentAgent, chatHistory);
+  // 5. Call Gemini
+  console.log("Calling callGemini with agent:", currentAgent);
+  const geminiResponse = await callGemini(currentAgent, chatHistory);
+  console.log("Raw Gemini Response:", geminiResponse);
 
-  return NextResponse.json({ message: "Route handler reached!" });
+    // 6. Insert Gemini Response into Supabase
+    const { error: geminiMessageError } = await supabase.from("messages").insert([
+        {
+          chat_session_id: chatSession.id,
+          sender_type: currentAgent, // Use current agent type
+          sender_name: currentAgent, // Use current agent, or lookup agent details
+          message_text: geminiResponse.text,
+          formatted_data: geminiResponse.formattedData,
+        },
+      ]);
+
+  if (geminiMessageError) {
+    console.error("Error inserting Gemini response:", geminiMessageError);
+    return NextResponse.json({ message: "Failed to get AI response" }, { status: 500 });
+  }
+
+  // 7. Determine Next Agent
+  let nextAgent = currentAgent;
+
+  if (currentAgent === 'nurse') {
+    console.log("Current agent is Nurse. Checking for suggestion...");
+    const suggestionMatch = geminiResponse.text.match(/Suggest:\s*(.+)/);
+    if (suggestionMatch) {
+      const suggestedSpecialists = suggestionMatch[1].split(',').map(s => s.trim().toLowerCase().replace(/\s+/g, '_'));
+      console.log("Nurse suggested specialists:", suggestedSpecialists);
+      for (let suggestedSpecialist of suggestedSpecialists) {
+          if (Object.keys(agents).includes(suggestedSpecialist)) {
+              nextAgent = 'interpreter';
+              console.log("Switching to Interpreter.");
+              break; // Use the *first* valid suggestion
+          }
+      }
+    } else {
+      nextAgent = 'interpreter';
+      console.log("Nurse did not suggest a specialist. Switching to Interpreter.");
+    }
+  } else if (currentAgent === "interpreter") {
+     console.log("Current agent is Interpreter. Checking formatted data...");
+    if (geminiResponse.formattedData && geminiResponse.formattedData.suggestedSpecialist) {
+      let suggested = geminiResponse.formattedData.suggestedSpecialist.toLowerCase().replace(/\s+/g, '_');
+       console.log("Interpreter suggested specialist:", suggested);
+      if (Object.keys(agents).includes(suggested)) {
+        nextAgent = suggested;
+         console.log("Switching to specialist:", nextAgent);
+      } else {
+        nextAgent = "general_practitioner";
+        console.log("Invalid specialist suggestion. Switching to General Practitioner.");
+      }
+    } else {
+      nextAgent = "general_practitioner";
+      console.log("Interpreter did not suggest a specialist. Switching to General Practitioner.");
+    }
+  } else {
+    console.log(`Current agent is ${currentAgent}.  Keeping the same agent.`);
+  }
+ console.log("Next Agent:", nextAgent);
+
+  // 8. Update current_agent in chat_sessions
+  const { error: updateChatError } = await supabase
+    .from('chat_sessions')
+    .update({ current_agent: nextAgent })
+    .eq('id', chatSession.id);
+
+  if (updateChatError) {
+    console.error('Failed to store current agent:', updateChatError);
+  }
+
+  return NextResponse.json({ success: true, nextAgent }, { status: 200 });
 }

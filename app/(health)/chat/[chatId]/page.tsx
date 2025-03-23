@@ -5,9 +5,9 @@ import { createSupabaseAdmin } from '@/lib/supabaseClient';
 import { Message } from '@/lib/types';
 
 interface ChatPageProps {
-  params: {
+  params: Promise<{
     chatId: string;
-  };
+  }>;
 }
 
 async function getChatHistory(chatId: string): Promise<Message[]> {
@@ -38,7 +38,8 @@ async function getChatHistory(chatId: string): Promise<Message[]> {
   return messages || [];
 }
 
-export default async function ChatPage({ params }: ChatPageProps) {
+export default async function ChatPage(props: ChatPageProps) {
+  const params = await props.params;
   // Access dynamic param only inside the function body
   const chatId = params.chatId;
   const initialMessages = await getChatHistory(chatId);
