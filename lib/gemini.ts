@@ -4,6 +4,7 @@ import { Message } from "./types";
 import { createSupabaseAdmin } from "@/lib/supabaseClient";
 import { agents } from "./agents";
 import { SupabaseClient } from "@supabase/supabase-js";
+import * as fz from 'fuzzball'; // Import fuzzball
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -29,8 +30,7 @@ function getGenerationConfig() {
         maxOutputTokens: 4096, //  Maximum number of tokens in the response.  Make sure this is large enough for your needs. Gemini 1.5 pro support large.
     };
 }
-
-const supabase = createSupabaseAdmin(); // Use existing admin client
+const supabase = createSupabaseAdmin();
 
 // --- PDF Handling and RAG ---
 
@@ -46,11 +46,154 @@ async function getEmbeddings(text: string): Promise<number[]> {
     }
 }
 
+// --- Data Extraction and Validation ---
+
+interface InterpretedData {  // Define the *ideal* structure
+    primaryComplaint: string | null;
+    symptoms: Symptom[];
+    otherRelevantDetails: string | null;
+    suggestedSpecialist: string | null;
+}
+
+interface Symptom {
+    name: string | null;
+    onset: string | null;
+    severity: string | null;
+    location: string | null;
+    duration: string | null;
+    character: string | null;
+    aggravatingFactors: string | null;
+    alleviatingFactors: string | null;
+    radiation: string | null;
+    timing: string | null;
+    additionalDetails: string | null;
+}
+
+// Helper function to parse and validate the Interpreter's output
+function parseInterpreterOutput(geminiText: string): InterpretedData {
+    let parsedData: any = {};
+    try {
+        parsedData = JSON.parse(geminiText);
+    } catch (error) {
+        console.warn("Interpreter did not return valid JSON:", geminiText, error);
+        return { // Return a default object if parsing fails
+            primaryComplaint: null,
+            symptoms: [],
+            otherRelevantDetails: null,
+            suggestedSpecialist: null,
+        };
+    }
+
+    const result: InterpretedData = {
+        primaryComplaint: null,
+        symptoms: [],
+        otherRelevantDetails: null,
+        suggestedSpecialist: null,
+    };
+
+    // Use fuzzy matching to map keys and extract values
+    const schema: Record<string, keyof InterpretedData> = {  // Define the expected keys
+        "primary complaint": "primaryComplaint",
+        "primarycomplaint": "primaryComplaint", // Handle variations
+        "symptoms": "symptoms",
+        "other relevant details": "otherRelevantDetails",
+        "otherrelevantdetails": "otherRelevantDetails",
+        "suggested specialist": "suggestedSpecialist",
+        "suggestedspecialist": "suggestedSpecialist",
+    };
+    // Symptoms schema
+    const symptomSchema: Record<string, keyof Symptom> = {
+        "name": "name",
+        "onset": "onset",
+        "severity": "severity",
+        "location": "location",
+        "duration": "duration",
+        "character": "character",
+        "aggravating factors": "aggravatingFactors",
+        "aggravatingfactors": "aggravatingFactors",
+        "alleviating factors": "alleviatingFactors",
+        "alleviatingfactors": "alleviatingFactors",
+        "radiation": "radiation",
+        "timing": "timing",
+        "additional details": "additionalDetails",
+        "additionaldetails": "additionalDetails",
+    }
+
+
+    for (const key in parsedData) {
+        let bestMatch = null;
+        let bestScore = 0;
+
+        //Fuzzy match with main keys
+        for(const schemaKey in schema){
+            const score = fz.ratio(key.toLowerCase(), schemaKey.toLowerCase());
+            if(score > bestScore){
+                bestScore = score;
+                bestMatch = schemaKey;
+            }
+        }
+
+        if (bestMatch && bestScore > 80) { //  Similarity threshold (adjust as needed)
+            const matchedKey = schema[bestMatch];
+
+            if(matchedKey === "symptoms"){ //If Symptoms then check each symptoms
+                if (Array.isArray(parsedData[key])) {
+
+                    result.symptoms = parsedData[key].map((symptomData: any) => {
+                        const symptom: Symptom = {  // Initialize with nulls
+                            name: null,
+                            onset: null,
+                            severity: null,
+                            location: null,
+                            duration: null,
+                            character: null,
+                            aggravatingFactors: null,
+                            alleviatingFactors: null,
+                            radiation: null,
+                            timing: null,
+                            additionalDetails: null,
+                        };
+
+                        // Extract values for symptom
+
+                        for(const symptomKey in symptomData){
+                            let symptomBestMatch = null;
+                            let symptomBestScore = 0;
+
+                            for(const symptomSchemaKey in symptomSchema){
+                                const score = fz.ratio(symptomKey.toLowerCase(), symptomSchemaKey.toLowerCase());
+                                if(score > symptomBestScore){
+                                    symptomBestScore = score;
+                                    symptomBestMatch = symptomSchemaKey
+                                }
+                            }
+                             if (symptomBestMatch && symptomBestScore > 80) {
+                                const matchedSymptomKey = symptomSchema[symptomBestMatch];
+                                symptom[matchedSymptomKey] = typeof symptomData[symptomKey] === 'string' ? symptomData[symptomKey] : null;
+                             }
+                        }
+
+                        return symptom;
+                    });
+                }
+            } else {
+                //Handle other keys
+                result[matchedKey] =
+                typeof parsedData[key] === 'string' ? parsedData[key] : null;
+            }
+
+        }
+    }
+
+    return result;
+}
+
+
 // --- Main Function to Call Gemini (with RAG) ---
-export async function callGemini(agentName: string, chatHistory: Message[]): Promise<{ text: string; formattedData?: any }> {
+export async function callGemini(agentName: string, chatHistory: Message[], userMessage: string = ""): Promise<{ text: string; formattedData?: any }> {
     console.log("--- callGemini invoked ---");
     console.log("Agent Name:", agentName);
-    console.log("Chat History:", chatHistory);
+    // console.log("Chat History:", chatHistory); // Keep, but maybe truncate for very long histories
 
     try {
         const agent = agents[agentName];
@@ -74,10 +217,10 @@ export async function callGemini(agentName: string, chatHistory: Message[]): Pro
         console.log("Gemini chat started.");
 
         const lastTurn = buildLastTurn(chatHistory);
-        if (!lastTurn) {
-            console.log("Last turn is empty.");
-            return { text: "", formattedData: {} }
-        }
+        // if (!lastTurn) { //No need to check this now. Since, if agent is interpretor we pass userMessage
+        //     console.log("Last turn is empty.");
+        //     return { text: "", formattedData: {} }
+        // }
 
         console.log("Last turn:", lastTurn);
 
@@ -122,7 +265,8 @@ export async function callGemini(agentName: string, chatHistory: Message[]): Pro
 
         // --- End RAG Integration ---
 
-        const prompt = `${context}\n\n${lastTurn}`;
+        const prompt = (agentName !== "interpreter") ? `${context}\n\n${lastTurn}` : userMessage;
+
         console.log("Prompt:", prompt); // Log full prompt
 
         const result = await geminiChat.sendMessage(prompt);
@@ -131,16 +275,14 @@ export async function callGemini(agentName: string, chatHistory: Message[]): Pro
         const text = response.text();
         console.log("Gemini response text:", text);
 
-        let formattedData;
+        // --- Parse and Validate Interpreter Output ---
+        let formattedData: InterpretedData | undefined = undefined; // Use the interface
         if (agentName === "interpreter") {
-            try {
-                formattedData = JSON.parse(text);
-                console.log("Formatted data:", formattedData);
-            } catch (parseError) {
-                console.warn("Interpreter did not return valid JSON:", text, parseError);
-                // Could send a message back to the chat saying the interpreter failed.
-            }
+            formattedData = parseInterpreterOutput(text); // Use the parsing function
+            console.log("Formatted data (Parsed):", formattedData);
         }
+
+
           return { text, formattedData };
 
     } catch (error) {
@@ -148,7 +290,6 @@ export async function callGemini(agentName: string, chatHistory: Message[]): Pro
         return { text: "An error occurred while communicating with Gemini.", formattedData: undefined }; // Consistent return
     }
 }
-
 function buildGeminiHistory(chatHistory: Message[], agentName: string): Content[] {
     const relevantHistory: Content[] = [];
 
@@ -165,9 +306,9 @@ function buildGeminiHistory(chatHistory: Message[], agentName: string): Content[
 }
 
 function buildLastTurn(chatHistory: Message[]): string {
-    let lastTurn = "";
+     let lastTurn = "";
     const lastUserMessage = chatHistory.filter(message => message.sender_type === "user").at(-1);
-    const lastAgentMessage = chatHistory.filter(message => message.sender_type !== "user").at(-1);
+    const lastAgentMessage = chatHistory.filter(message => message.sender_type !== "user" && message.sender_type !== "system").at(-1); //Exclude system for agent
      if (lastAgentMessage && chatHistory.indexOf(lastAgentMessage) > chatHistory.indexOf(lastUserMessage!)) {
         lastTurn = "";
     }

@@ -16,7 +16,7 @@ export interface User {
   export interface Message {
     id: string;
     chat_session_id: string;
-    sender_type: 'user' | 'nurse' | 'interpreter' | 'general_practitioner' | 'medicine_specialist' | 'dermatologist' | 'infectious_disease_specialist'; // Expand as needed
+    sender_type: 'user' | 'nurse' | 'interpreter' | 'general_practitioner' | 'medicine_specialist' | 'dermatologist' | 'infectious_disease_specialist' | 'system'; // Expand as needed
     sender_name: string;
     message_text: string;
     sent_at: string;
