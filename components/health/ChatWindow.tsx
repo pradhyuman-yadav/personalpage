@@ -1,5 +1,5 @@
 // components/ChatWindow.tsx
-"use client";
+"use client"
 import { useState, useEffect, useRef } from 'react';
 import { Message } from '@/lib/types';
 import ChatMessage from './ChatMessage';
@@ -18,26 +18,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, initialMessages }) => {
     const [nextAgent, setNextAgent] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [interpreterOutput, setInterpreterOutput] = useState<any>(null); // State for Interpreter output - Keep this if you want to show it
     const [userName, setUserName] = useState<string | null>(null); // State for user name
     const [userAge, setUserAge] = useState<number | null>(null);   // State for user age
+    const [retryAfter, setRetryAfter] = useState<number | null>(null); // Add retryAfter state
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        scrollToBottom()
+      }, [messages]);
 
     const handleSendMessage = async (messageText: string) => {
-        setLoading(true);
-        setInterpreterOutput(null); // Clear previous interpreter output
+      setLoading(true);
 
         // Optimistically add the user's message to the UI *immediately*
         const newUserMessage: Message = {
             id: `temp-${Date.now()}`, // Use a temporary ID.  The server will provide the real ID.
-            chat_session_id: "0",  //Temporary
+            chat_session_id: `temp-${Date.now()}`,
             sender_type: "user",
             sender_name: userName || "You", // Use "You" if userName is not yet available
             message_text: messageText,
@@ -56,30 +55,35 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, initialMessages }) => {
                 body: JSON.stringify({ message: messageText }),
             });
 
+            if (response.status === 429) { // Rate limit exceeded
+                const retryAfterSeconds = parseInt(response.headers.get('Retry-After') || '60', 10); // Default to 60 seconds
+                setRetryAfter(retryAfterSeconds); // Set the retryAfter state
+                 // Remove the optimistic message
+                setMessages(prevMessages => prevMessages.filter(msg => msg.id !== newUserMessage.id));
+                return; // Stop processing
+            }
+
             if (!response.ok) {
                 throw new Error(`Failed to send message: ${response.status}`);
             }
 
             const data = await response.json(); // Get all data from response
-            const { nextAgent, userName, userAge } = data; // Removed interpreterOutput
+            const { nextAgent,  userName, userAge } = data; // Removed interpreterOutput
             setNextAgent(nextAgent); // Update next agent
-            // setInterpreterOutput(interpreterOutput); // Update interpreter output - only if you display it
-            if (userName) setUserName(userName); // Update the user name
-            if (userAge) setUserAge(userAge); // Update the user age
+            if(userName) setUserName(userName); // Update the user name
+            if(userAge) setUserAge(userAge); // Update the user age
 
-            // Fetch chat history
+              // Fetch chat history
             const historyResponse = await fetch(`/api/chat/${chatId}/history`);
-            if (!historyResponse.ok) {
-                throw new Error(`Failed to fetch chat history: ${historyResponse.status}`);
-            }
-            const dataHistory = await historyResponse.json();
-            setMessages(dataHistory); // Update with *server-provided* messages, replacing temporary ones
+                if (!historyResponse.ok) {
+                    throw new Error(`Failed to fetch chat history: ${historyResponse.status}`);
+                }
+                const dataHistory = await historyResponse.json();
+                setMessages(dataHistory); // Update with *server-provided* messages, replacing temporary ones
 
         } catch (error) {
             console.error(error);
-            // Handle error:  Maybe remove the optimistic message, or show an error state.
-            // Example of removing the optimistic message on error (you could show a retry button, etc.):
-            setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== newUserMessage.id));
+             setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== newUserMessage.id));
         } finally {
             setLoading(false);
         }
@@ -87,7 +91,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, initialMessages }) => {
 
     return (
         <div className="flex flex-col">
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-grow overflow-y-auto">
                 <div className="flex justify-between items-center p-4 border-b">
                     <div>
                         Chatting with: {nextAgent ? nextAgent.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Nurse'}
@@ -134,7 +138,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, initialMessages }) => {
                         </div>
                         {/*This is for user Avatar*/}
                         {message.sender_type === 'user' && (
-                            <Avatar>
+                            <Avatar className="ml-2">
                                 <AvatarImage src={`/user.png`} alt={message.sender_type} />
                                 <AvatarFallback>{"U"}</AvatarFallback>
                             </Avatar>
@@ -158,7 +162,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, initialMessages }) => {
                     <div ref={messagesEndRef} />
                 </div>
             </div>
-            <ChatInput onSendMessage={handleSendMessage} disabled={loading} />
+            <ChatInput onSendMessage={handleSendMessage} disabled={loading} setRetryAfter={setRetryAfter}/>
         </div>
     );
 };

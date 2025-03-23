@@ -2,9 +2,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdmin } from '@/lib/supabaseClient';
-import { callGemini } from '@/lib/gemini'; // Import callGemini
-import { agents } from '@/lib/agents'; // Import agents
-import { Message as VercelChatMessage} from "ai"
+import { callGemini } from '@/lib/gemini';
+import { agents } from '@/lib/agents';
+import { Message as VercelChatMessage } from "ai";
+
+const RATE_LIMIT_DURATION = 60 * 1000; // 60 seconds (1 minute) - adjust as needed
+const MAX_REQUESTS_PER_DURATION = 100;  // Max requests per minute - adjust as needed
 
 export async function POST(
     request: NextRequest,
@@ -13,12 +16,62 @@ export async function POST(
     const { chatId } = context.params;
     const supabase = createSupabaseAdmin();
     const reqBody = await request.json();
-    const { message }: { message: string } = reqBody;  // User's *text* message
+    const { message }: { message: string } = reqBody;
 
     if (!message) {
         return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
+    // --- Rate Limiting ---
+    const { data: rateLimitData, error: rateLimitError } = await supabase
+        .from('rate_limits')
+        .select('last_reset, requests_remaining')
+        .eq('id', 'global')
+        .single(); // Fetch the single row
+
+    if (rateLimitError) {
+        console.error("Error fetching rate limit:", rateLimitError);
+        return NextResponse.json({ error: "Rate limit check failed" }, { status: 500 });
+    }
+
+    let { last_reset, requests_remaining } = rateLimitData!;
+    const now = Date.now();
+    const resetTime = new Date(last_reset).getTime() + RATE_LIMIT_DURATION;
+
+      if (now > resetTime) {
+        // Reset the rate limit
+        const { error: updateError } = await supabase
+            .from('rate_limits')
+            .update({ last_reset: new Date(now).toISOString(), requests_remaining: MAX_REQUESTS_PER_DURATION })
+            .eq('id', 'global');
+
+        if (updateError) {
+            console.error("Error resetting rate limit:", updateError);
+            return NextResponse.json({ error: "Rate limit reset failed" }, { status: 500 });
+        }
+        last_reset = new Date(now).toISOString();
+        requests_remaining = MAX_REQUESTS_PER_DURATION;
+    }
+
+    if (requests_remaining <= 0) {
+        const timeLeft = Math.max(0, Math.ceil((resetTime - now) / 1000)); // Time left in seconds
+        return NextResponse.json(
+            { error: "Rate limit exceeded", retryAfter: timeLeft },
+            { status: 429, headers: { 'Retry-After': timeLeft.toString() } } //  429 Too Many Requests
+        );
+    }
+      // Decrement requests remaining
+    const { error: decrementError } = await supabase
+        .from('rate_limits')
+        .update({ requests_remaining: requests_remaining - 1 })
+        .eq('id', 'global');
+
+        if (decrementError) {
+             console.error("Failed to decrement", decrementError);
+            return NextResponse.json({ error: "Failed to decrement the limit" }, { status: 500 });
+        }
+
+    // --- (Rest of your API route logic - from "Get Chat Session" onwards) ---
     const { data: chatSession, error: chatSessionError } = await supabase
         .from("chat_sessions")
         .select("*, users(name, age)")
@@ -72,8 +125,8 @@ export async function POST(
         return NextResponse.json({ message: 'Failed to fetch chat history' }, { status: 500 });
     }
 
-    // --- Current Agent Response ---  // Pass the user message to callGemini
-    let agentResponse = await callGemini(currentAgent, chatHistory!, message);
+    // --- Current Agent Response ---
+    let agentResponse = await callGemini(currentAgent, chatHistory, message); // Pass message here
 
     // Handle [FOR USER] for the current agent
     if (agentResponse.text.startsWith("[FOR USER]")) {
@@ -84,7 +137,7 @@ export async function POST(
                 sender_type: currentAgent,
                 sender_name: currentAgent,
                 message_text: userMessage,
-                formatted_data: agentResponse.formattedData,
+                formatted_data: agentResponse.formattedData, // Store any formatted data (might be from a future feature)
             },
         ]);
         if (agentMessageError) {
@@ -138,7 +191,7 @@ export async function POST(
             }
 
             // --- Call New Agent ---
-            const newAgentResponse = await callGemini(nextAgent, updatedChatHistory!);
+            const newAgentResponse = await callGemini(nextAgent, updatedChatHistory);
             // Check for [FOR USER] tag for the new agent's initial message
             if (newAgentResponse.text.startsWith("[FOR USER]")) {
                     const userMessage = newAgentResponse.text.substring("[FOR USER]".length).trim();
@@ -202,7 +255,7 @@ export async function POST(
             }
 
             // --- Call New Agent ---
-            const newAgentResponse = await callGemini(nextAgent, updatedChatHistory!);
+            const newAgentResponse = await callGemini(nextAgent, updatedChatHistory);
 
             // Check for [FOR USER] tag for the new agent's initial message
             if (newAgentResponse.text.startsWith("[FOR USER]")) {
