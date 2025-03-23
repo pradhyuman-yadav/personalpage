@@ -45,7 +45,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false, 
         type="text"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        placeholder={countdown !== null ? `Wait ${countdown} seconds...` : "Type your message..."}
+        placeholder={disabled ? "System Processing..." : "Type your message..."}
         disabled={disabled || countdown !== null}
         className="flex-grow mr-4"
       />

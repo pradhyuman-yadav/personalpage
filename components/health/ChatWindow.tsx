@@ -2,7 +2,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Message } from "@/lib/types";
-import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Import Avatar
@@ -59,13 +58,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, initialMessages }) => {
         body: JSON.stringify({ message: messageText }),
       });
 
-      if (response.status === 429) { // Rate limit exceeded
-        const retryAfterSeconds = parseInt(response.headers.get('Retry-After') || '60', 10); // Default to 60 seconds
+      if (response.status === 429) {
+        // Rate limit exceeded
+        const retryAfterSeconds = parseInt(
+          response.headers.get("Retry-After") || "60",
+          10
+        ); // Default to 60 seconds
         setRetryAfter(retryAfterSeconds); // Set the retryAfter state
-         // Remove the optimistic message
-        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== newUserMessage.id));
+        // Remove the optimistic message
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg.id !== newUserMessage.id)
+        );
         return; // Stop processing
-    }
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to send message: ${response.status}`);
@@ -91,6 +96,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, initialMessages }) => {
       setMessages((prevMessages) =>
         prevMessages.filter((msg) => msg.id !== newUserMessage.id)
       );
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          id: `error-${Date.now()}`,
+          chat_session_id: `error-${Date.now()}`, // Or a suitable value
+          sender_type: "system", // Indicate it's a system message
+          sender_name: "System",
+          message_text: `Failed to get a response from the AI: ${error}`,
+          formatted_data: null,
+          sent_at: new Date().toISOString(),
+        },
+      ]);
     } finally {
       setLoading(false);
     }

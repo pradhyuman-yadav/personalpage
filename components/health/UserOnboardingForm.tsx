@@ -44,8 +44,8 @@ const UserOnboardingForm: React.FC<UserOnboardingFormProps> = ({ onSuccess }) =>
       const { chatId } = await response.json();
       onSuccess(chatId);
         router.push(`/chat/${chatId}`); //Naviagate to chat.
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      setError((error as Error).message);
     } finally {
       setLoading(false);
     }

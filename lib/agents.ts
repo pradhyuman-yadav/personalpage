@@ -41,30 +41,29 @@ export const agents: Record<string, Agent> = {
 
   interpreter: {
     name: "Interpreter",
-    systemPrompt: `You are a message analyzer.  Your ONLY task is to determine if the *preceding agent's message* (Nurse or specialist) explicitly requests a consultation with another specialist.
+    systemPrompt: `You are a message analyzer.  Your ONLY task is to determine if the preceding agent's message (Nurse or specialist) explicitly requests a consultation with another specialist.
 
-    INPUT: The *preceding agent's* last message.
-    OUTPUT: The KEY (string) of the requested specialist from the list below, IF AND ONLY IF the message explicitly asks for that specialist.  Otherwise, return an EMPTY STRING ("").  DO NOT output anything else. NO JSON.
+    INPUT: The preceding agent's last message.
+    OUTPUT: The KEY (string) of the requested specialist from the list below, IF AND ONLY IF the message explicitly asks for that specialist.  Otherwise, return an EMPTY STRING ("").  DO NOT output anything else. NO JSON OR CODE.
 
-    Available Specialists (KEYS):
-
-    general_practitioner
-    medicine_specialist
-    dermatologist
-    infectious_disease_specialist
-    cardiologist
-    neurologist
-    gastroenterologist
-    endocrinologist
-    pulmonologist
-    nephrologist
-    oncologist
-    psychiatrist
-    psychologist
-    pediatrician
-    gynecologist
-    orthopedist
-    ent_specialist
+    Available Specialists (ONLY ACCEPTED ANSWERS):
+    1. general_practitioner
+    2. medicine_specialist
+    3. dermatologist
+    4. infectious_disease_specialist
+    5. cardiologist
+    6. neurologist
+    7. gastroenterologist
+    8. endocrinologist
+    9. pulmonologist
+    10. nephrologist
+    11. oncologist
+    12. psychiatrist
+    13. psychologist
+    14. pediatrician
+    15. gynecologist
+    16. orthopedist
+    17. ent_specialist
 
     Examples:
 
@@ -77,11 +76,13 @@ export const agents: Record<string, Agent> = {
     Input: "[FOR USER] The patient is feeling better today."
     Output:
 
-    Input: "Suggest: Neurologist" //From Nurse
+    Input: "Suggest: Neurologist"
     Output: neurologist
 
     Input:  "[FOR USER] Please give me paracetamol."
     Output:
+
+    DO NOT RETURN ANYTHING APART FROM THE SPECIFIED KEY.
     `,
   },
   general_practitioner: {

@@ -3,6 +3,7 @@ export interface User {
     id: string;
     name: string;
     age: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     other_info?: any; // Use a more specific type if you know the structure
   }
   
@@ -20,5 +21,6 @@ export interface User {
     sender_name: string;
     message_text: string;
     sent_at: string;
-    formatted_data?: any; // For structured data from the Interpreter
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatted_data?: any;
   }

@@ -3,13 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabaseClient";
 import { callGemini } from "@/lib/gemini";
 import { agents } from "@/lib/agents";
-import { Message as VercelChatMessage } from "ai";
 
 export async function POST(
   request: NextRequest,
-  context: { params: { chatId: string } }
+  context: { params: Promise<{ chatId: string }> }
 ) {
-  const { chatId } = context.params;
+  const { chatId } = await context.params;
   const supabase = createSupabaseAdmin();
   const reqBody = await request.json();
   const { message }: { message: string } = reqBody; // User's *text* message
@@ -22,7 +21,10 @@ export async function POST(
   try {
     const { data: rateLimitData, error: rateLimitError } = await supabase.rpc(
       "handle_rate_limit"
-    ); // NO PARAMETERS!
+    );
+    console.log("Rate Limit Data:", rateLimitData);
+    console.log("Rate Limit Error:", rateLimitError);
+    
 
     if (rateLimitError) {
       console.error("Error in rate limit RPC:", rateLimitError);
@@ -31,8 +33,7 @@ export async function POST(
         { status: 500 }
       );
     }
-
-    if (!rateLimitData) {
+    if (!rateLimitData[0]) {
       console.error("Rate limit RPC returned no data");
       return NextResponse.json(
         { error: "Rate limit check/update failed" },
@@ -40,8 +41,9 @@ export async function POST(
       );
     }
 
-    if (!rateLimitData.allowed) {
-      const retryAfterSeconds = rateLimitData.retry_after ?? 60;
+    if (!rateLimitData[0].allowed) {
+      const retryAfterSeconds = rateLimitData[0].retry_after ?? 60;
+      console.log(`Rate limit exceeded. Retry after ${retryAfterSeconds} seconds.`);
       return NextResponse.json(
         { error: "Rate limit exceeded", retryAfter: retryAfterSeconds },
         {
@@ -85,7 +87,7 @@ export async function POST(
     );
   }
 
-  let currentAgent = currentAgentData?.current_agent || "nurse";
+  const currentAgent = currentAgentData?.current_agent || "nurse";
 
   // --- Insert *USER* Message ---
   const { error: userMessageError } = await supabase.from("messages").insert([
@@ -106,7 +108,7 @@ export async function POST(
   }
 
   // Fetch history *before* agent/interpreter calls
-  let { data: chatHistory, error: historyError } = await supabase //Type casting
+  const { data: chatHistory, error: historyError } = await supabase //Type casting
     .from("messages")
     .select("*")
     .eq("chat_session_id", chatSession.id)
@@ -121,7 +123,11 @@ export async function POST(
   }
 
   // --- Current Agent Response ---
-  let agentResponse = await callGemini(currentAgent, chatHistory ?? [], message); // Pass message here
+  const agentResponse = await callGemini(
+    currentAgent,
+    chatHistory ?? [],
+    message
+  ); // Pass message here
 
   // Handle [FOR USER] for the current agent
   if (agentResponse.text.startsWith("[FOR USER]")) {
@@ -148,7 +154,7 @@ export async function POST(
   let nextAgent = currentAgent; // Keep current agent by default.
 
   if (agentResponse.text.startsWith("Suggest:")) {
-    let suggestedAgent = agentResponse.text
+    const suggestedAgent = agentResponse.text
       .substring("Suggest:".length)
       .trim()
       .toLowerCase()
@@ -162,7 +168,7 @@ export async function POST(
         .split(" ")
         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
-      let agentChangeMessage = `${agentDisplayName} has joined the chat.`;
+      const agentChangeMessage = `${agentDisplayName} has joined the chat.`;
 
       const { error: updateChatError } = await supabase
         .from("chat_sessions")
@@ -248,7 +254,7 @@ export async function POST(
         .split(" ")
         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
-      let agentChangeMessage = `${agentDisplayName} has joined the chat.`;
+      const agentChangeMessage = `${agentDisplayName} has joined the chat.`;
 
       const { error: updateChatError } = await supabase
         .from("chat_sessions")
