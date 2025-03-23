@@ -207,7 +207,6 @@ function buildGeminiHistory(
   return relevantHistory;
 }
 
-// Corrected buildLastTurn function
 function buildLastTurn(chatHistory: Message[]): string {
   let lastTurn = "";
   const lastUserMessage = chatHistory
@@ -228,6 +227,35 @@ function buildLastTurn(chatHistory: Message[]): string {
     lastTurn += `You: ${lastUserMessage.message_text}`;
   }
   return lastTurn;
+}
+
+export async function generateLawResponse(history: string, userQuestion: string, userLocation: string): Promise<string> {
+
+    const prompt = `You are a helpful legal assistant. Provide information and answer questions to the best of your ability, based on the provided conversation history and user location. Do not offer legal advice.
+    
+    User Location: ${userLocation}
+
+    Conversation History:
+    ${history}
+
+    User: ${userQuestion}
+    Assistant:`;
+
+     try {
+
+        const geminiChat = model.startChat({
+            history: [],
+        });
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        const result = await geminiChat.sendMessage(prompt);
+        const response = result.response;
+        const text = response.text();
+        return text;
+
+    } catch (error) {
+        console.error("Error calling Gemini:", error);
+        return "Sorry, I encountered an error while processing your request."; // Return a user-friendly message
+    }
 }
 
 export { getEmbeddings };
