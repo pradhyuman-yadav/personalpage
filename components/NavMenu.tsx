@@ -63,7 +63,13 @@ export default function NavigationMenuDemo() {
           className="w-full" // Full width on small screens
         >
           <div className="flex items-center justify-between px-4 py-2">
-            <h4 className="text-sm font-semibold">Pradhyuman</h4>
+            <h4 className="text-sm font-semibold">
+              <Link href="/" passHref>
+              <div>
+                Pradhyuman
+              </div>
+              </Link>
+            </h4>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="sm">
                 <HamburgerMenuIcon className="h-4 w-4" />
@@ -106,6 +112,16 @@ export default function NavigationMenuDemo() {
             <Link href="/train-sim" passHref>
               <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
                 Train Sim
+              </div>
+            </Link>
+            <Link href="/law-advisor" passHref>
+              <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
+                Law
+              </div>
+            </Link>
+            <Link href="/health-center" passHref>
+              <div className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
+                Health Center
               </div>
             </Link>
             <ModeToggle />

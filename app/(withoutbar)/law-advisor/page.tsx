@@ -1,9 +1,13 @@
 // app/law-advisor/page.tsx
 "use client";
 import { useState } from "react";
+import type { Metadata } from "next";
 import LawChatWindow from "@/components/lawAdvisorUtil/LawChatWindow";
 import PromptIdForm from "@/components/lawAdvisorUtil/PromptIdForm"; // Import the form
-
+export const metadata: Metadata = {
+  title: "Law Advisor",
+  description: "AI Law Advisor which gives personalized advice based on local laws.",
+};
 export default function LawAdvisorPage() {
   const [promptId, setPromptId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
