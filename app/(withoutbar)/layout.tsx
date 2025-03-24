@@ -18,8 +18,8 @@ const inconsolata = Inconsolata({
 });
 
 export const metadata: Metadata = {
-  title: "Pradhyuman",
-  description: "Pradhyuman's public space",
+  title: "Pradhyuman's Resume",
+  description: "Pradhyuman's Resume is here in PDF format. If you want to download it you can.S",
 };
 
 const info = (
