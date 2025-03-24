@@ -4,6 +4,7 @@ import { generateEmailAddress } from '@/lib/email';
 
 export async function POST(req: Request) {
     try {
+        console.log(req);
         const email = generateEmailAddress();
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // Expires in 1 hour
 
@@ -38,8 +39,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ email: data[0].address, expiresAt, id: data[0].id }, { status: 201 });
 
 
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error generating email:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

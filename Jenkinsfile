@@ -8,7 +8,7 @@ pipeline {
         SUPABASE_SERVICE_ROLE_KEY = credentials('SUPABASE_SERVICE_ROLE_KEY')
         NEXT_PUBLIC_PASSPHRASE = credentials('NEXT_PUBLIC_PASSPHRASE')
         NEXT_PUBLIC_BASE_URL = credentials('NEXT_PUBLIC_BASE_URL')
-        JIGSAWSTACK_API_KEY = credentials('JIGSAWSTACK_API_KEY')
+        GEMINI_API_KEY = credentials('GEMINI_API_KEY')
     }
 
     stages {
@@ -28,7 +28,7 @@ pipeline {
                         --build-arg SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY}" \\
                         --build-arg NEXT_PUBLIC_PASSPHRASE="${NEXT_PUBLIC_PASSPHRASE}" \\
                         --build-arg NEXT_PUBLIC_BASE_URL="${NEXT_PUBLIC_BASE_URL}" \\
-                        --build-arg JIGSAWSTACK_API_KEY="${JIGSAWSTACK_API_KEY}" \\
+                        --build-arg GEMINI_API_KEY="${GEMINI_API_KEY}" \\
                         -t my-nextjs-app:latest .
                     """
                 }
@@ -54,7 +54,7 @@ pipeline {
                         -e NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \\
                         -e NEXT_PUBLIC_PASSPHRASE="${NEXT_PUBLIC_PASSPHRASE}" \\
                         -e NEXT_PUBLIC_BASE_URL="${NEXT_PUBLIC_BASE_URL}" \\
-                        -e JIGSAWSTACK_API_KEY="${JIGSAWSTACK_API_KEY}" \\
+                        -e GEMINI_API_KEY="${GEMINI_API_KEY}" \\
                         my-nextjs-app:latest
                     """
                 }
